@@ -1,0 +1,1 @@
+export default {content:['./index.html','./src/**/*.{js,jsx}'],theme:{extend:{colors:{kahawa:{DEFAULT:'#6d4c41',dark:'#4e342e'}}}},plugins:[],}
