@@ -1,3 +1,4 @@
+// src/components/ExchangeRatesTable.jsx
 import React, { useEffect, useState } from "react";
 
 /**
@@ -10,24 +11,24 @@ export default function ExchangeRatesTable({ rates = [], onSave }) {
   const [newRate, setNewRate] = useState("");
   const [err, setErr] = useState("");
 
-  // Normalize incoming rows from API
+  // Normalize a single API row to our table model
   const normalize = (r) => ({
-  target: String(r.target_currency ?? r.currency ?? r.target ?? "").toUpperCase(),
-  rate: Number(r.rate ?? r.value ?? 0),
-  updated_at: r.updated_at ?? r.updatedAt ?? null,
-});
-
+    target: String(r.target_currency ?? r.currency ?? r.target ?? "").toUpperCase(),
+    rate: Number(r.rate ?? r.value ?? 0),
+    updated_at: r.updated_at ?? r.updatedAt ?? null,
+  });
 
   useEffect(() => {
     setRows((rates || []).map(normalize).sort((a, b) => a.target.localeCompare(b.target)));
   }, [rates]);
 
-  // Validation helpers
+  // Helpers
   const validCur = (s) => /^[A-Z]{3,10}$/.test(s);
+  const toNumber = (v) => Number(String(v ?? "").replace(/,/g, "").trim()); // allow "117,000"
 
   const handleAdd = async () => {
     const target = newCur.trim().toUpperCase();
-    const rateNum = Number(newRate);
+    const rateNum = toNumber(newRate);
 
     if (!validCur(target) || !Number.isFinite(rateNum) || rateNum <= 0) {
       setErr("Enter a valid currency (e.g., KES) and a positive numeric rate.");
@@ -35,12 +36,12 @@ export default function ExchangeRatesTable({ rates = [], onSave }) {
     }
     setErr("");
 
-    // TEMP: show what we’re about to send
+    // DEBUG payload (remove later)
     console.log("➡️ onSave payload (add):", { target_currency: target, rate: rateNum });
 
     await onSave?.({ target_currency: target, rate: rateNum });
 
-    // optimistic UI (AdminPanel will also refresh)
+    // optimistic UI update (AdminPanel may also refetch)
     setRows((prev) => {
       const idx = prev.findIndex((x) => x.target === target);
       const updated = { target, rate: rateNum, updated_at: new Date().toISOString() };
@@ -57,7 +58,7 @@ export default function ExchangeRatesTable({ rates = [], onSave }) {
 
   const handleRowSave = async (target, rate) => {
     const t = String(target || "").toUpperCase().trim();
-    const r = Number(rate);
+    const r = toNumber(rate);
 
     if (!validCur(t) || !Number.isFinite(r) || r <= 0) {
       setErr("Enter a valid currency (3–10 letters) and a positive numeric rate.");
@@ -109,18 +110,23 @@ export default function ExchangeRatesTable({ rates = [], onSave }) {
               <Td>
                 <input
                   value={newCur}
-                  onChange={(e) => setNewCur(e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    setNewCur(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase())
+                  }
                   placeholder="KES"
                   className="border rounded px-2 py-1 w-24"
                 />
               </Td>
               <Td align="right">
                 <input
-                  type="number"
-                  step="0.0001"
+                  type="text"
+                  inputMode="decimal"
                   value={newRate}
-                  onChange={(e) => setNewRate(e.target.value)}
-                  placeholder="130.00"
+                  onChange={(e) =>
+                    // allow digits & commas while typing; sanitize on save
+                    setNewRate(e.target.value.replace(/[^0-9.,]/g, ""))
+                  }
+                  placeholder="129"
                   className="border rounded px-2 py-1 w-32 text-right"
                 />
               </Td>
@@ -147,8 +153,10 @@ function RateRow({ row, onSave }) {
 
   useEffect(() => setRate(row.rate), [row.rate]);
 
+  const toNumber = (v) => Number(String(v ?? "").replace(/,/g, "").trim());
+
   const save = async () => {
-    await onSave(row.target, rate);
+    await onSave(row.target, toNumber(rate));
     setEditing(false);
   };
 
@@ -158,14 +166,14 @@ function RateRow({ row, onSave }) {
       <Td align="right">
         {editing ? (
           <input
-            type="number"
-            step="0.0001"
-            value={rate}
-            onChange={(e) => setRate(e.target.value)}
+            type="text"
+            inputMode="decimal"
+            value={String(rate)}
+            onChange={(e) => setRate(e.target.value.replace(/[^0-9.,]/g, ""))}
             className="border rounded px-2 py-1 w-32 text-right"
           />
         ) : (
-          Number(row.rate).toFixed(4)
+          Number(row.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })
         )}
       </Td>
       <Td>{row.updated_at ? new Date(row.updated_at).toLocaleString() : "—"}</Td>
@@ -175,12 +183,21 @@ function RateRow({ row, onSave }) {
             <button className="px-3 py-1 text-sm bg-green-600 text-white rounded" onClick={save}>
               Save
             </button>
-            <button className="px-3 py-1 text-sm bg-gray-500 text-white rounded" onClick={() => setEditing(false)}>
+            <button
+              className="px-3 py-1 text-sm bg-gray-500 text-white rounded"
+              onClick={() => {
+                setRate(row.rate);
+                setEditing(false);
+              }}
+            >
               Cancel
             </button>
           </div>
         ) : (
-          <button className="px-3 py-1 text-sm bg-gray-700 text-white rounded" onClick={() => setEditing(true)}>
+          <button
+            className="px-3 py-1 text-sm bg-gray-700 text-white rounded"
+            onClick={() => setEditing(true)}
+          >
             Edit
           </button>
         )}
