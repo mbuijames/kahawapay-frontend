@@ -4,7 +4,7 @@ import TransactionsTable from "./TransactionsTable";
 import ExchangeRatesTable from "./ExchangeRatesTable";
 
 // Ensure requests hit your backend even without a .env during dev
-const API_BASE = import.meta.env?.VITE_API_BASE || "https://api.kahawapay.com";
+const API_BASE = import.meta.env?.VITE_API_BASE || "https://app.kahawapay.com";
 
 export default function AdminPanel() {
   const [transactions, setTransactions] = useState([]);
