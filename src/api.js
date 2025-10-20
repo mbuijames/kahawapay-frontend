@@ -2,14 +2,29 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-/**
- * CONFIG
- * - Set VITE_API_BASE to your backend origin only, e.g. "http://localhost:5000"
- *   (do NOT include /api here)
- * - All endpoints below include "/api/..." so they work consistently.
- */
-const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
-export const api = axios.create({ baseURL: API_BASE });
+/* ------------------------------------------
+ * BASE URL (env-driven, safe in prod)
+ * ------------------------------------------ */
+const isProd = import.meta.env.MODE === "production";
+const envBase = import.meta.env.VITE_API_BASE;
+
+// In production, fail fast if API base isn't set
+if (isProd && !envBase) {
+  throw new Error("VITE_API_BASE is not set in production build");
+}
+
+// In dev you may fall back to local; in prod we already required envBase
+export const API_BASE = (envBase || "http://localhost:5000").replace(/\/+$/, "");
+
+/* ------------------------------------------
+ * AXIOS CLIENT
+ * ------------------------------------------ */
+export const api = axios.create({
+  baseURL: API_BASE,                          // do NOT include "/api" here
+  headers: { "Content-Type": "application/json" },
+  timeout: 15000,
+  // withCredentials: true, // enable only if you use cookie auth
+});
 
 /* ------------------------------------------
  * AUTH TOKEN HELPERS
@@ -35,11 +50,9 @@ export function logoutUser() {
  * ------------------------------------------ */
 export async function loginUser(email, password) {
   try {
-    const { data } = await api.post(`/api/auth/login`, { email, password }, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const { data } = await api.post(`/api/auth/login`, { email, password });
 
-    // 2FA path support (if your backend returns it)
+    // Optional 2FA path
     if (data?.requires2fa && data?.tempToken) {
       return { requires2fa: true, tempToken: data.tempToken, email };
     }
@@ -68,11 +81,8 @@ export async function loginUser(email, password) {
 
 export async function registerUser(email, password) {
   try {
-    const { data } = await api.post(`/api/auth/register`, { email, password }, {
-      headers: { "Content-Type": "application/json" },
-    });
-    // backend typically returns { token, role, email } OR { id, email, role }
-    return data;
+    const { data } = await api.post(`/api/auth/register`, { email, password });
+    return data; // e.g., { token, role, email } OR { id, email, role }
   } catch (err) {
     const msg =
       err?.response?.data?.error ||
@@ -89,7 +99,8 @@ export async function registerUser(email, password) {
 export async function getDepositAddress() {
   try {
     const { data } = await api.get(`/api/wallet/deposit-address`, {
-      params: { _ts: Date.now() }, // cache-bust
+      // _ts added by interceptor as well; keeping here is harmless
+      params: { _ts: Date.now() },
     });
     if (!data?.address) throw new Error("No address returned");
     return data; // { address: "..." }
@@ -100,15 +111,13 @@ export async function getDepositAddress() {
       body: err?.response?.data,
       message: err?.message,
     });
-    throw new Error(
-      err?.response?.data?.error || "Failed to load deposit address"
-    );
+    throw new Error(err?.response?.data?.error || "Failed to load deposit address");
   }
 }
 
 export async function getCurrencies() {
   try {
-    // Adjust this if your backend exposes a different route for supported currencies
+    // Adjust if your backend exposes a different route
     const { data } = await api.get(`/api/settings/exchange-rates/currencies`, {
       params: { _ts: Date.now() },
     });
@@ -121,20 +130,20 @@ export async function getCurrencies() {
   }
 }
 
-/**
- * Preview calculator (frontend fallback mock).
- * Your app often computes on the backend; keep this for quick previews if needed.
- */
+/* ------------------------------------------
+ * PREVIEW CALCULATOR (frontend-only helper)
+ * ------------------------------------------ */
 export async function previewTransaction(btcAmount, currency) {
   if (!btcAmount || !currency) throw new Error("BTC amount and currency required");
 
+  // These are placeholders; your backend should compute the real values
   const btcToUsdRate = 117000; // demo rate
   const fxRates = { KES: 129, UGX: 3800, TZS: 2600 };
   if (!fxRates[currency]) throw new Error("Unsupported currency");
 
   const usdValue = btcAmount * btcToUsdRate;
 
-  // Guest limit
+  // Guest limit example
   const token = localStorage.getItem("token");
   if (!token && usdValue > 10000) {
     throw new Error("Guests cannot preview amounts above $10,000");
@@ -167,16 +176,23 @@ export async function previewTransaction(btcAmount, currency) {
 })();
 
 /* ------------------------------------------
- * ALWAYS ATTACH TOKEN
+ * INTERCEPTORS: attach token + cache-buster
  * ------------------------------------------ */
 api.interceptors.request.use((config) => {
+  // Bearer token (in case token changed after init)
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  // Cache-buster (_ts) to avoid stale caches/CDNs
+  const p = new URLSearchParams(config.params || {});
+  if (!p.has("_ts")) p.set("_ts", Date.now());
+  config.params = p;
+
   return config;
 });
 
 /* ------------------------------------------
- * CURRENT USER
+ * CURRENT USER HELPER
  * ------------------------------------------ */
 export function getCurrentUser() {
   const token = localStorage.getItem("token");
