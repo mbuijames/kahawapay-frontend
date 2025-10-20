@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { api } from "../api"; // <-- use centralized client
 import TransactionsTable from "./TransactionsTable";
 import ExchangeRatesTable from "./ExchangeRatesTable";
-
-// Ensure requests hit your backend even without a .env during dev
-const API_BASE = import.meta.env?.VITE_API_BASE || "https://api.kahawapay.com";
 
 export default function AdminPanel() {
   const [transactions, setTransactions] = useState([]);
@@ -13,21 +10,6 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-
-  // Always include Authorization if present; add cache-buster param
-  const makeCfg = () => {
-    const token = localStorage.getItem("token") || "";
-    return {
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        Pragma: "no-cache",
-      },
-      params: { _ts: Date.now() },
-      withCredentials: false, // set true only if you rely on cookie auth
-    };
-  };
 
   // ---------- Normalizers ----------
   const normalizeTx = (r) => ({
@@ -52,24 +34,18 @@ export default function AdminPanel() {
     const num = rawNum == null ? NaN : Number(String(rawNum).replace(/[,\s_]/g, ""));
     const value = Number.isFinite(num) ? num : null;
 
-    // normalize updated_at into an ISO string; if missing, use null
-    const updated =
-      r.updated_at ??
-      r.updatedAt ??
-      (typeof r.updated_at === "string" ? r.updated_at : null);
+    const updated = r.updated_at ?? r.updatedAt ?? null;
 
     return {
       target_currency: target,
       rate: value,
       updated_at: updated,
-
-      // legacy mirrors
       target,
       value,
     };
   };
 
-  // Deduplicate: keep freshest row per currency (by updated_at desc)
+  // Deduplicate: keep freshest row per currency
   const uniqueNewestByTarget = (list) => {
     const byTarget = new Map();
     for (const row of list) {
@@ -80,7 +56,6 @@ export default function AdminPanel() {
         byTarget.set(key, { ...row, _ts: ts });
       }
     }
-    // return sorted by target asc
     return Array.from(byTarget.values())
       .map(({ _ts, ...r }) => r)
       .sort((a, b) => a.target_currency.localeCompare(b.target_currency));
@@ -91,8 +66,7 @@ export default function AdminPanel() {
     try {
       setLoading(true);
       setError("");
-      const url = `${API_BASE}/api/transactions/all`;
-      const res = await axios.get(url, makeCfg());
+      const res = await api.get("/api/transactions/all");
       const data = Array.isArray(res.data) ? res.data : [];
       setTransactions(data.map(normalizeTx));
     } catch (e) {
@@ -106,27 +80,20 @@ export default function AdminPanel() {
 
   const loadRates = async () => {
     try {
-      // single, public, normalized endpoint (backend GET must be public)
-      const url = `${API_BASE}/api/settings/exchange-rates`;
-      const res = await axios.get(url, makeCfg());
-
+      // Backend GET should be public + no-cache headers
+      const res = await api.get("/api/settings/exchange-rates");
       const raw = Array.isArray(res.data) ? res.data : [];
       const normalized = raw.map(normalizeRate);
-
-      // 🔒 dedupe by target, keep freshest updated_at
-      const newest = uniqueNewestByTarget(normalized);
-      setRates(newest);
+      setRates(uniqueNewestByTarget(normalized));
     } catch (e) {
       console.error("❌ loadRates:", e?.response?.status, e?.response?.data || e.message);
-      // keep previous rates if fetch fails
     }
   };
 
   // ---------- Mutations ----------
   const markPaid = async (id) => {
     try {
-      const url = `${API_BASE}/api/transactions/${id}/mark-paid`;
-      await axios.put(url, {}, makeCfg());
+      await api.put(`/api/transactions/${id}/mark-paid`);
       await loadTransactions();
     } catch (e) {
       console.error("❌ markPaid:", e);
@@ -136,8 +103,7 @@ export default function AdminPanel() {
 
   const archiveTx = async (id) => {
     try {
-      const url = `${API_BASE}/api/transactions/${id}/archive`;
-      await axios.put(url, {}, makeCfg());
+      await api.put(`/api/transactions/${id}/archive`);
       await loadTransactions();
     } catch (e) {
       console.error("❌ archiveTx:", e);
@@ -145,40 +111,34 @@ export default function AdminPanel() {
     }
   };
 
-  const sanitizeRate = (r) => String(r ?? "").replace(/[,\s_]/g, ""); // "107,000" -> "107000"
-
   const saveRate = async ({ target_currency, rate }) => {
     if (saving) return;
     setSaving(true);
     try {
       const cur = String(target_currency || "").toUpperCase().trim();
-      const cleaned = sanitizeRate(rate);
+      const cleaned = Number(String(rate ?? "").replace(/[,\s_]/g, ""));
 
-      if (!/^[A-Z0-9:_-]{3,32}$/.test(cur) || !cleaned || Number(cleaned) <= 0) {
+      if (!/^[A-Z0-9:_-]{3,32}$/.test(cur) || !Number.isFinite(cleaned) || cleaned <= 0) {
         alert("Enter a valid currency (e.g., KES / BTCUSD) and a positive rate.");
         return;
       }
 
-      const payload = { target_currency: cur, rate: cleaned, target: cur, value: cleaned };
+      const payload = { target_currency: cur, rate: cleaned };
 
-      // Prefer v3; fallback to legacy POST path if v3 isn’t mounted
-      const urlPrimary = `${API_BASE}/api/settings/exchange-rates/v3`;
-      const urlFallback = `${API_BASE}/api/settings/exchange-rates`;
-
+      // Prefer v3; fallback to legacy POST if v3 isn’t mounted
       let res;
       try {
-        res = await axios.post(urlPrimary, payload, makeCfg());
+        res = await api.post("/api/settings/exchange-rates/v3", payload);
       } catch (_e) {
-        res = await axios.post(urlFallback, payload, makeCfg());
+        res = await api.post("/api/settings/exchange-rates", payload);
       }
 
-      // Merge the echo optimistically
-      const echoed = res?.data ? normalizeRate(res.data) : { target_currency: cur, rate: Number(cleaned), updated_at: new Date().toISOString(), target: cur, value: Number(cleaned) };
-      const merged = uniqueNewestByTarget([echoed, ...rates]);
-      setRates(merged);
+      const echoed = res?.data ? normalizeRate(res.data) : {
+        target_currency: cur, rate: cleaned, updated_at: new Date().toISOString(), target: cur, value: cleaned
+      };
 
-      // Also refresh from server to be 100% in sync
-      await loadRates();
+      setRates((prev) => uniqueNewestByTarget([echoed, ...prev]));
+      await loadRates(); // confirm from server
     } catch (e) {
       console.error("❌ saveRate failed:", {
         sent: { target_currency, rate },
@@ -197,10 +157,10 @@ export default function AdminPanel() {
     }
   };
 
-  // a changing key to force rerender of ExchangeRatesTable when list truly changes
-  const ratesVersion = useMemo(() => {
-    return rates.map(r => `${r.target_currency}:${r.rate}:${r.updated_at ?? ""}`).join("|");
-  }, [rates]);
+  const ratesVersion = useMemo(
+    () => rates.map(r => `${r.target_currency}:${r.rate}:${r.updated_at ?? ""}`).join("|"),
+    [rates]
+  );
 
   useEffect(() => {
     loadTransactions();
@@ -217,10 +177,7 @@ export default function AdminPanel() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Panel</h1>
         <button
-          onClick={() => {
-            loadTransactions();
-            loadRates();
-          }}
+          onClick={() => { loadTransactions(); loadRates(); }}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           🔄 Refresh
@@ -237,7 +194,6 @@ export default function AdminPanel() {
         error={error}
       />
 
-      {/* key forces a full rerender if BTCUSD row changes */}
       <ExchangeRatesTable key={ratesVersion} rates={rates} onSave={saveRate} saving={saving} />
     </div>
   );
