@@ -13,10 +13,9 @@ export default function DepositForm() {
   const [recipientMsisdn, setRecipientMsisdn] = useState("");
 
   const [preview, setPreview] = useState(null);
-  const [previewError, setPreviewError] = useState(""); // 👈 new: inline preview error
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(""); // top-of-page generic errors
+  const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -24,7 +23,7 @@ export default function DepositForm() {
   const storedEmail = localStorage.getItem("email") || "Guest";
   const isGuest = !token;
 
-  // Guest limit for UX (real enforcement on backend)
+  // Env guest limit for UX (backend enforces too)
   const GUEST_TX_LIMIT_USD = Number(import.meta.env?.VITE_GUEST_TX_LIMIT_USD);
   const GUEST_LIMIT = Number.isFinite(GUEST_TX_LIMIT_USD) ? GUEST_TX_LIMIT_USD : 100;
 
@@ -53,7 +52,8 @@ export default function DepositForm() {
       try {
         const cur = await getCurrencies();
         const list = Array.isArray(cur?.currencies) && cur.currencies.length
-          ? cur.currencies : ["KES", "UGX", "TZS"];
+          ? cur.currencies
+          : ["KES", "UGX", "TZS"];
         setCurrencies(list);
         if (!list.includes(currency)) setCurrency(list[0]);
       } catch {
@@ -96,36 +96,12 @@ export default function DepositForm() {
     };
   };
 
-  // Turn server error into a clean message (avoid dumping HTML)
-  const friendlyPreviewError = (res) => {
-    try {
-      if (!res) return "Failed to preview transaction";
-      // If server gave a JSON error with a message, use it
-      const serverMsg = res?.data?.error || res?.data?.message;
-      if (serverMsg) return String(serverMsg);
-      // If data is a string (likely HTML 404 page), sanitize
-      if (typeof res?.data === "string") {
-        if (res.data.includes("Cannot POST")) {
-          return "Preview endpoint not found on server: /api/transactions/guest/preview";
-        }
-        if (res.data.includes("<!DOCTYPE html")) {
-          return "Server returned an HTML error page for preview request";
-        }
-        return "Preview failed";
-      }
-      return "Failed to preview transaction";
-    } catch {
-      return "Failed to preview transaction";
-    }
-  };
-
   const handlePreview = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccessMsg("");
     setPreview(null);
-    setPreviewError("");
 
     try {
       const body = {
@@ -146,28 +122,22 @@ export default function DepositForm() {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
-      // PREVIEW: expect 200 with JSON when under limit,
-      // and 403 JSON when above limit.
+      // PREVIEW: no DB write
       const res = await api.post(previewEndpoint, body, {
         headers,
-        validateStatus: () => true, // 👈 let us handle 4xx manually
+        validateStatus: (s) => s < 500,
         params: { _ts: Date.now() },
       });
 
       if (res.status >= 400) {
-        // Show inline error instead of dumping raw HTML
-        const msg = friendlyPreviewError(res);
-        setPreview(null);
-        setPreviewError(msg);
-        return;
+        const reason = res?.data?.error || res?.data?.details || JSON.stringify(res?.data);
+        console.error("❌ Preview failed:", res.status, reason);
+        throw new Error(reason || "Failed to preview transaction");
       }
 
       setPreview(normalizePreview(res.data, body));
-      setPreviewError("");
     } catch (err) {
-      // Non-HTTP errors (network, code)
-      setPreview(null);
-      setPreviewError(err.message || "Failed to preview transaction");
+      setError(err.message || "Failed to preview transaction");
     } finally {
       setLoading(false);
     }
@@ -189,15 +159,15 @@ export default function DepositForm() {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
-      // CREATE: writes to DB; backend still enforces any limits
+      // CREATE: writes to DB
       const res = await api.post(createEndpoint, body, {
         headers,
         validateStatus: (s) => s < 500,
         params: { _ts: Date.now() },
       });
       if (res.status >= 400) {
-        const reason = res?.data?.error || res?.data?.details || "Failed to create transaction";
-        throw new Error(reason);
+        const reason = res?.data?.error || res?.data?.details || JSON.stringify(res?.data);
+        throw new Error(reason || "Failed to create transaction");
       }
 
       // Stay on this page: clear preview & inputs, show success
@@ -217,7 +187,6 @@ export default function DepositForm() {
       Math.round(Number(amount || 0))
     ) + " " + cur;
 
-  // Over-limit UI (only makes sense when we have a successful preview with usdValue)
   const overGuestLimit =
     isGuest && typeof preview?.usdValue === "number" && preview.usdValue > GUEST_LIMIT;
 
@@ -231,14 +200,14 @@ export default function DepositForm() {
         </div>
       )}
 
-      {/* Success banner */}
+      {/* Success banner (shown even after preview is cleared) */}
       {successMsg && (
         <p className="mb-4 text-green-700 bg-green-50 border border-green-200 rounded p-3 text-center">
           {successMsg}
         </p>
       )}
 
-      {/* Top-level errors (non-preview) */}
+      {/* Errors */}
       {error && <p className="mb-4 text-red-600 text-center">{error}</p>}
 
       {/* Deposit Address + QR */}
@@ -325,20 +294,19 @@ export default function DepositForm() {
         </button>
       </form>
 
-      {/* Preview success card */}
+      {/* Preview (no DB writes yet) */}
       {preview && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border text-center">
           <h3 className="text-lg font-semibold mb-2">Recipient will Receive</h3>
           <p className="text-2xl font-bold text-green-600">
             {formatLocal(preview.finalAmountLocal, preview.currency)}
           </p>
-
-          {/* If backend returned a preview over the limit and still provided usdValue, show inline warning */}
-          {isGuest && overGuestLimit && (
-            <p className="mt-2 text-sm text-red-600">
-              Guests cannot exceed ${GUEST_LIMIT.toLocaleString()}
-            </p>
-          )}
+{/* ⬇️ Add this inline guest-limit message */}
+    {isGuest && overGuestLimit && (
+      <p className="mt-2 text-sm text-red-600">
+        Guests cannot exceed ${GUEST_LIMIT.toLocaleString()}
+      </p>
+    )}
 
           <div className="mt-2 text-sm text-gray-600">
             <div><b>Sender:</b> {preview.senderEmail}</div>
@@ -358,14 +326,6 @@ export default function DepositForm() {
                 ? `Limit Exceeded (Max $${GUEST_LIMIT.toLocaleString()})`
                 : "Complete Transaction"}
           </button>
-        </div>
-      )}
-
-      {/* Inline preview error card (appears when preview 4xx fails, e.g., over-limit 403 or missing route) */}
-      {!preview && previewError && (
-        <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200 text-center">
-          <h3 className="text-lg font-semibold mb-2 text-red-700">Preview Error</h3>
-          <p className="text-sm text-red-700">{previewError}</p>
         </div>
       )}
     </div>
