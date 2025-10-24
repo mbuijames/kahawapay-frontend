@@ -4,49 +4,61 @@ import QRCode from "react-qr-code";
 import { api, getDepositAddress, getCurrencies } from "../api";
 
 export default function DepositForm() {
+  // Deposit address + UX
   const [depositAddress, setDepositAddress] = useState("");
   const [addrError, setAddrError] = useState("");
+  const [addrLoading, setAddrLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
+  // Form inputs
   const [currencies, setCurrencies] = useState([]);
   const [btcAmount, setBtcAmount] = useState("");
   const [currency, setCurrency] = useState("KES");
   const [recipientMsisdn, setRecipientMsisdn] = useState("");
 
+  // Preview + submit state
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [copied, setCopied] = useState(false);
 
+  // Auth & limits
   const token = localStorage.getItem("token");
   const storedEmail = localStorage.getItem("email") || "Guest";
   const isGuest = !token;
 
-  // Env guest limit for UX (backend enforces too)
   const GUEST_TX_LIMIT_USD = Number(import.meta.env?.VITE_GUEST_TX_LIMIT_USD);
   const GUEST_LIMIT = Number.isFinite(GUEST_TX_LIMIT_USD) ? GUEST_TX_LIMIT_USD : 100;
 
-  // Separate endpoints
+  // Endpoints
   const previewEndpoint = isGuest ? "/api/transactions/guest/preview" : "/api/transactions/preview";
   const createEndpoint  = isGuest ? "/api/transactions/guest"         : "/api/transactions";
+
+  // -------- Deposit address loader with retry ----------
+  async function loadAddress() {
+    setAddrLoading(true);
+    try {
+      const addr = await getDepositAddress();
+      if (!addr?.address) {
+        setDepositAddress("");
+        setAddrError("Deposit address is not available.");
+      } else {
+        setDepositAddress(addr.address);
+        setAddrError("");
+      }
+    } catch (e) {
+      setDepositAddress("");
+      setAddrError(e?.response?.data?.error || e?.message || "Failed to load deposit address.");
+    } finally {
+      setAddrLoading(false);
+    }
+  }
 
   useEffect(() => {
     (async () => {
       // BTC deposit address
-      try {
-        const addr = await getDepositAddress();
-        if (!addr?.address) {
-          setDepositAddress("");
-          setAddrError("Deposit address is not available.");
-        } else {
-          setDepositAddress(addr.address);
-          setAddrError("");
-        }
-      } catch (e) {
-        setDepositAddress("");
-        setAddrError(e?.response?.data?.error || e?.message || "Failed to load deposit address.");
-      }
+      await loadAddress();
 
       // Supported currencies
       try {
@@ -65,6 +77,7 @@ export default function DepositForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Copy helper
   const handleCopy = () => {
     if (!depositAddress) return;
     navigator.clipboard.writeText(depositAddress);
@@ -72,9 +85,15 @@ export default function DepositForm() {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  // Normalize preview response to UI shape
   const normalizePreview = (data, fallback) => {
+    // Prefer server-provided sender_email (e.g., guest-00009@kahawapay.com)
     const senderEmail =
-      data?.payer || data?.payer_email || data?.email || data?.sender_email || storedEmail;
+      data?.sender_email ||
+      data?.payer ||
+      data?.payer_email ||
+      data?.email ||
+      storedEmail;
 
     // Prefer amount_recipient / recipient_amount; fall back to amount
     const amountRecipient =
@@ -96,6 +115,7 @@ export default function DepositForm() {
     };
   };
 
+  // Preview (no DB writes)
   const handlePreview = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -122,7 +142,6 @@ export default function DepositForm() {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
-      // PREVIEW: no DB write
       const res = await api.post(previewEndpoint, body, {
         headers,
         validateStatus: (s) => s < 500,
@@ -131,7 +150,6 @@ export default function DepositForm() {
 
       if (res.status >= 400) {
         const reason = res?.data?.error || res?.data?.details || JSON.stringify(res?.data);
-        console.error("❌ Preview failed:", res.status, reason);
         throw new Error(reason || "Failed to preview transaction");
       }
 
@@ -143,6 +161,7 @@ export default function DepositForm() {
     }
   };
 
+  // Create (writes to DB)
   const handleCompleteTransaction = async () => {
     if (!preview || submitting) return;
     setSuccessMsg("");
@@ -159,7 +178,6 @@ export default function DepositForm() {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
 
-      // CREATE: writes to DB
       const res = await api.post(createEndpoint, body, {
         headers,
         validateStatus: (s) => s < 500,
@@ -170,7 +188,7 @@ export default function DepositForm() {
         throw new Error(reason || "Failed to create transaction");
       }
 
-      // Stay on this page: clear preview & inputs, show success
+      // Stay on this page
       setPreview(null);
       setBtcAmount("");
       setRecipientMsisdn("");
@@ -182,6 +200,7 @@ export default function DepositForm() {
     }
   };
 
+  // Formatting helper
   const formatLocal = (amount, cur) =>
     new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
       Math.round(Number(amount || 0))
@@ -200,14 +219,14 @@ export default function DepositForm() {
         </div>
       )}
 
-      {/* Success banner (shown even after preview is cleared) */}
+      {/* Success banner */}
       {successMsg && (
         <p className="mb-4 text-green-700 bg-green-50 border border-green-200 rounded p-3 text-center">
           {successMsg}
         </p>
       )}
 
-      {/* Errors */}
+      {/* Top-level errors (preview/submit) */}
       {error && <p className="mb-4 text-red-600 text-center">{error}</p>}
 
       {/* Deposit Address + QR */}
@@ -215,26 +234,42 @@ export default function DepositForm() {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Send BTC to (App Wallet Address)
         </label>
+
         <div className="bg-gray-100 p-3 rounded-md">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <code className="text-gray-800 break-all">
-              {depositAddress || "Address unavailable"}
+              {addrLoading ? "Loading..." : (depositAddress || "Address unavailable")}
             </code>
-            <button
-              type="button"
-              onClick={handleCopy}
-              disabled={!depositAddress}
-              className={`ml-2 px-3 py-1 text-sm text-white rounded ${
-                depositAddress ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400 cursor-not-allowed"
-              }`}
-            >
-              {copied ? "Copied!" : "Copy"}
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                disabled={!depositAddress || addrLoading}
+                className={`px-3 py-1 text-sm text-white rounded ${
+                  depositAddress && !addrLoading
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+
+              <button
+                type="button"
+                onClick={loadAddress}
+                disabled={addrLoading}
+                className="px-3 py-1 text-sm rounded border bg-white hover:bg-gray-50"
+              >
+                {addrLoading ? "Retrying..." : "Retry"}
+              </button>
+            </div>
           </div>
+
           {addrError && <div className="mt-2 text-sm text-red-600">{addrError}</div>}
         </div>
 
-        {depositAddress && (
+        {depositAddress && !addrLoading && (
           <div className="flex justify-center mt-4">
             <QRCode value={depositAddress} size={128} />
           </div>
@@ -301,12 +336,13 @@ export default function DepositForm() {
           <p className="text-2xl font-bold text-green-600">
             {formatLocal(preview.finalAmountLocal, preview.currency)}
           </p>
-{/* ⬇️ Add this inline guest-limit message */}
-    {isGuest && overGuestLimit && (
-      <p className="mt-2 text-sm text-red-600">
-        Guests cannot exceed ${GUEST_LIMIT.toLocaleString()}
-      </p>
-    )}
+
+          {/* Optional inline guest-limit message */}
+          {isGuest && overGuestLimit && (
+            <p className="mt-2 text-sm text-red-600">
+              Guests cannot exceed ${GUEST_LIMIT.toLocaleString()}
+            </p>
+          )}
 
           <div className="mt-2 text-sm text-gray-600">
             <div><b>Sender:</b> {preview.senderEmail}</div>
