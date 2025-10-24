@@ -1,12 +1,12 @@
 // src/pages/DepositForm.jsx
 import React, { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
-import { api, getDepositAddress, getCurrencies } from "../api";
+import { api, getDepositAddress, getCurrencies, getCurrentUser } from "../api";
 
 export default function DepositForm() {
   const [depositAddress, setDepositAddress] = useState("");
   const [addrError, setAddrError] = useState("");
-
+const user = getCurrentUser();
   const [currencies, setCurrencies] = useState([]);
   const [btcAmount, setBtcAmount] = useState("");
   const [currency, setCurrency] = useState("KES");
@@ -19,9 +19,10 @@ export default function DepositForm() {
   const [successMsg, setSuccessMsg] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const token = localStorage.getItem("token");
-  const storedEmail = localStorage.getItem("email") || "Guest";
-  const isGuest = !token;
+  const user = getCurrentUser();
+  const token = user?.token || localStorage.getItem("token") || null;
+ const storedEmail = user?.email || localStorage.getItem("email") || "Guest";
+  const isGuest = !user;
 
   // Env guest limit for UX (backend enforces too)
   const GUEST_TX_LIMIT_USD = Number(import.meta.env?.VITE_GUEST_TX_LIMIT_USD);
