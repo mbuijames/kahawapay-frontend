@@ -35,32 +35,27 @@ export default function DepositForm() {
   const previewEndpoint = isGuest ? "/api/transactions/guest/preview" : "/api/transactions/preview";
   const createEndpoint  = isGuest ? "/api/transactions/guest"         : "/api/transactions";
 
-  // -------- Deposit address loader with retry ----------
-  async function loadAddress() {
-    setAddrLoading(true);
-    try {
-      const addr = await getDepositAddress();
-      if (!addr?.address) {
-        setDepositAddress("");
-        setAddrError("Deposit address is not available.");
-      } else {
-        setDepositAddress(addr.address);
-        setAddrError("");
-      }
-    } catch (e) {
-      setDepositAddress("");
-      setAddrError(e?.response?.data?.error || e?.message || "Failed to load deposit address.");
-    } finally {
-      setAddrLoading(false);
-    }
-  }
-
+  // -------- Load deposit address once ----------
   useEffect(() => {
     (async () => {
-      // BTC deposit address
-      await loadAddress();
+      setAddrLoading(true);
+      try {
+        const addr = await getDepositAddress();
+        if (!addr?.address) {
+          setDepositAddress("");
+          setAddrError("Deposit address is not available.");
+        } else {
+          setDepositAddress(addr.address);
+          setAddrError("");
+        }
+      } catch (e) {
+        setDepositAddress("");
+        setAddrError(e?.response?.data?.error || e?.message || "Failed to load deposit address.");
+      } finally {
+        setAddrLoading(false);
+      }
 
-      // Supported currencies
+      // Load supported currencies
       try {
         const cur = await getCurrencies();
         const list = Array.isArray(cur?.currencies) && cur.currencies.length
@@ -241,29 +236,18 @@ export default function DepositForm() {
               {addrLoading ? "Loading..." : (depositAddress || "Address unavailable")}
             </code>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!depositAddress || addrLoading}
-                className={`px-3 py-1 text-sm text-white rounded ${
-                  depositAddress && !addrLoading
-                    ? "bg-blue-500 hover:bg-blue-600"
-                    : "bg-gray-400 cursor-not-allowed"
-                }`}
-              >
-                {copied ? "Copied!" : "Copy"}
-              </button>
-
-              <button
-                type="button"
-                onClick={loadAddress}
-                disabled={addrLoading}
-                className="px-3 py-1 text-sm rounded border bg-white hover:bg-gray-50"
-              >
-                {addrLoading ? "Retrying..." : "Retry"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleCopy}
+              disabled={!depositAddress || addrLoading}
+              className={`px-3 py-1 text-sm text-white rounded ${
+                depositAddress && !addrLoading
+                  ? "bg-blue-500 hover:bg-blue-600"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
           </div>
 
           {addrError && <div className="mt-2 text-sm text-red-600">{addrError}</div>}
