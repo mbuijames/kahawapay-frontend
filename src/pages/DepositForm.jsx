@@ -1,4 +1,3 @@
-// src/pages/DepositForm.jsx
 import React, { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { api, getDepositAddress, getCurrencies } from "../api";
@@ -41,6 +40,8 @@ export default function DepositForm() {
       setAddrLoading(true);
       try {
         const addr = await getDepositAddress();
+        // Dev aid: log raw return to catch non-200 or wrong shape
+        console.debug("[getDepositAddress] result:", addr);
         if (!addr?.address) {
           setDepositAddress("");
           setAddrError("Deposit address is not available.");
@@ -49,8 +50,19 @@ export default function DepositForm() {
           setAddrError("");
         }
       } catch (e) {
+        // This path triggers your "Failed to load deposit address" message
+        console.error(
+          "[getDepositAddress] failed:",
+          e?.response?.status,
+          e?.response?.data,
+          e?.message
+        );
         setDepositAddress("");
-        setAddrError(e?.response?.data?.error || e?.message || "Failed to load deposit address.");
+        setAddrError(
+          e?.response?.data?.error ||
+          e?.message ||
+          "Failed to load deposit address."
+        );
       } finally {
         setAddrLoading(false);
       }
@@ -321,7 +333,6 @@ export default function DepositForm() {
             {formatLocal(preview.finalAmountLocal, preview.currency)}
           </p>
 
-          {/* Optional inline guest-limit message */}
           {isGuest && overGuestLimit && (
             <p className="mt-2 text-sm text-red-600">
               Guests cannot exceed ${GUEST_LIMIT.toLocaleString()}
