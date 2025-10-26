@@ -1,8 +1,6 @@
 // src/pages/Wallet.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-
-const API_BASE = import.meta.env?.VITE_API_BASE || "";
+import { api } from "../api"; // ✅ use shared axios instance (baseURL + interceptors)
 
 export default function Wallet() {
   const [rows, setRows] = useState([]);
@@ -26,6 +24,7 @@ export default function Wallet() {
   const cfg = () => ({
     headers: {
       "Content-Type": "application/json",
+      // ✅ auth header handled by interceptor, but keeping it here is harmless:
       Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
       Pragma: "no-cache",
@@ -37,11 +36,16 @@ export default function Wallet() {
     setLoading(true);
     setErr("");
     try {
-      const { data } = await axios.get(`${API_BASE}/api/wallet/mine`, cfg());
+      // ✅ use shared api instance & relative path (baseURL is already set)
+      const { data } = await api.get(`/api/wallet/mine`, cfg());
       const list = Array.isArray(data) ? data : [];
       setRows(list);
     } catch (e) {
-      console.error("wallet/mine error:", e?.response?.status, e?.response?.data || e.message);
+      console.error(
+        "wallet/mine error:",
+        e?.response?.status,
+        e?.response?.data || e.message
+      );
       setErr(e?.response?.data?.error || "Failed to load wallet. Please try again.");
       setRows([]);
     } finally {
@@ -49,7 +53,7 @@ export default function Wallet() {
     }
   };
 
-  const symbols = { KES: "KSh", UGX: "UGX", TZS: "TSh", USD: "$" };
+  const symbols = { KES: "KSh", UGX: "UGX", TZS: "TSh", USD: "$", INR: "₹" };
   const fmtAmt = (n) => Number(n ?? 0).toLocaleString();
 
   const downloadCSV = () => {
@@ -117,11 +121,14 @@ export default function Wallet() {
                   <tr key={t.id} className="hover:bg-gray-50 border-b">
                     <Td>{t.created_at ? new Date(t.created_at).toLocaleString() : ""}</Td>
                     <Td align="right">
-                      {(symbols[t.currency] || "")} {fmtAmt(Number(t.recipient_amount ?? 0).toFixed(2))}
+                      {(symbols[t.currency] || "")}{" "}
+                      {fmtAmt(Number(t.recipient_amount ?? 0).toFixed(2))}
                     </Td>
                     <Td>{t.currency || ""}</Td>
                     <Td className="capitalize">
-                      {(t.status || "").toLowerCase() === "paid" ? "completed" : (t.status || "").toLowerCase()}
+                      {(t.status || "").toLowerCase() === "paid"
+                        ? "completed"
+                        : (t.status || "").toLowerCase()}
                     </Td>
                     <Td>{t.recipient_msisdn || ""}</Td>
                   </tr>
@@ -143,9 +150,14 @@ export default function Wallet() {
   );
 }
 
+// Avoid dynamic Tailwind classes that can be purged:
 function Th({ children, align = "left" }) {
-  return <th className={`py-3 px-4 border-b text-${align} text-gray-700 font-semibold`}>{children}</th>;
+  const alignClass =
+    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
+  return <th className={`py-3 px-4 border-b ${alignClass} text-gray-700 font-semibold`}>{children}</th>;
 }
 function Td({ children, align = "left" }) {
-  return <td className={`py-3 px-4 text-${align}`}>{children}</td>;
+  const alignClass =
+    align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
+  return <td className={`py-3 px-4 ${alignClass}`}>{children}</td>;
 }
