@@ -9,7 +9,7 @@ import { jwtDecode } from "jwt-decode";
  * - All endpoints below include "/api/..." so they work consistently.
  */
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
-api.get(`/api/wallet/deposit-address`)
+
 export const api = axios.create({ baseURL: API_BASE });
 
 // 👇 Guest USD limit from env (frontend-visible)
