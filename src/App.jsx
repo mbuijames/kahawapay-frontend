@@ -21,6 +21,7 @@ import TwoFAPrompt from "./pages/TwoFAPrompt.jsx";
 import About from "./pages/About.jsx";
 import FAQ from "./pages/FAQ.jsx";
 import AccountSettings from "./pages/AccountSettings.jsx";
+import KahawaPayHero from "./components/KahawaPayHero";
 
 // --- Inline route guards ---
 function RequireAuth({ children }) {
@@ -35,6 +36,7 @@ function RequireAdmin({ children }) {
   if (role !== "admin") return <Navigate to="/wallet" replace />;
   return children;
 }
+
 
 function Shell({ user, setUser }) {
   const navigate = useNavigate();
@@ -88,6 +90,8 @@ function Shell({ user, setUser }) {
           </div>
         </div>
       </nav>
+		 {/* Top banner (appears on every page) */}
+      <KahawaPayHero />
 
       {/* Routes */}
       <main className="flex-1 max-w-4xl mx-auto px-4">
