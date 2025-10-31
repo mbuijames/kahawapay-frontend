@@ -1,11 +1,11 @@
 // src/pages/Home.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import KahawaPayHero from "../components/KahawaPayHero"; // ✅ added top banner import
+
 
 export default function Home() {
   return (
-    <div className="bg-gradient-to-b from-white to-gray-50 min-h-screen">
+   // <div className="bg-gradient-to-b from-white to-gray-50 min-h-screen">
       {/* ✅ Top Banner (Rates + Bitcoin) */}
      // <KahawaPayHero />
 
