@@ -1,22 +1,23 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
-// KahawaPayHero.jsx
-// Single-file React component that splits the top highlighted area into
-// a separate TopBanner component and the main Hero content.
-// Uses TailwindCSS for styling. If you don't use Tailwind, the classNames
-// are annotated so you can convert them to plain CSS.
+/**
+ * KahawaPayHero.jsx
+ * - Lightweight hero that aligns with App.jsx main container (max-w-4xl).
+ * - Optional top banner controlled by `showBanner` prop.
+ * - Use in Home.jsx or Shell depending on whether you want it site-wide.
+ */
 
-export default function KahawaPayHero() {
+export default function KahawaPayHero({ showBanner = true }) {
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Top banner / highlighted area */}
-      <TopBanner />
+    <div>
+      {showBanner && <TopBanner />}
 
-      {/* Main hero section */}
-      <main className="max-w-5xl mx-auto mt-8 bg-white shadow-sm">
+      {/* Main hero section (keeps width consistent with App main) */}
+      <main className="max-w-4xl mx-auto mt-8 bg-white shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-12 items-center">
           <div>
-            <h1 className="text-5xl font-extrabold text-brown-800 leading-tight">
+            <h1 className="text-5xl font-extrabold text-gray-800 leading-tight">
               Buy Your
               <br />
               Buddies Back
@@ -32,14 +33,27 @@ export default function KahawaPayHero() {
             </p>
 
             <div className="mt-8 flex gap-4">
-              <button className="px-6 py-3 rounded-lg bg-brown-700 text-white shadow">Send a Tip</button>
-              <button className="px-6 py-3 rounded-lg border border-gray-300">Create Account</button>
+              <Link
+                to="/send"
+                className="px-6 py-3 rounded-lg bg-gray-800 text-white shadow inline-block"
+              >
+                Send a Tip
+              </Link>
+
+              <Link
+                to="/register"
+                className="px-6 py-3 rounded-lg border border-gray-300 inline-block"
+              >
+                Create Account
+              </Link>
             </div>
           </div>
 
           <div className="flex justify-center">
-            {/* Placeholder for coffee image */}
-            <div className="w-64 h-64 bg-coffee-pattern rounded-full"></div>
+            {/* Replace with actual <img src=.../> or keep as placeholder */}
+            <div className="w-64 h-64 bg-gray-100 rounded-full flex items-center justify-center">
+              <span className="text-sm text-gray-400">Coffee image</span>
+            </div>
           </div>
         </div>
       </main>
@@ -50,16 +64,13 @@ export default function KahawaPayHero() {
 function TopBanner() {
   return (
     <div className="bg-transparent">
-      {/* Container centers the banner and gives it the outlined box look */}
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="border-4 border-black h-16 rounded-sm bg-white flex items-center p-4">
-          {/* Replace the inner content with whatever should live in the highlighted area */}
           <div className="w-full flex items-center justify-between">
-            <div className="text-gray-700"> <!-- left side (empty in screenshot) -->
-            </div>
+            <div className="text-gray-700">{/* left side empty (or logo/search) */}</div>
 
             <div className="text-right">
-              <span className="text-sm text-gray-500">Announcement or Search box can go here</span>
+              <span className="text-sm text-gray-500">Announcement or Search box</span>
             </div>
           </div>
         </div>
@@ -67,19 +78,3 @@ function TopBanner() {
     </div>
   );
 }
-
-/*
-Tailwind color utilities used above like text-brown-800 and bg-brown-700 are custom names.
-If you don't have those in your Tailwind config, replace them with e.g. text-gray-900 or bg-gray-800.
-
-If you prefer plain CSS instead of Tailwind, convert the classes:
-- .max-w-5xl { max-width: 64rem; margin-left: auto; margin-right: auto; }
-- .px-4 { padding-left: 1rem; padding-right: 1rem; } etc.
-
-How to use:
-- Save this file as KahawaPayHero.jsx and import it in your App.jsx:
-    import KahawaPayHero from './KahawaPayHero';
-    <KahawaPayHero />
-
-- To place different content into the highlighted TopBanner, modify the TopBanner() JSX.
-*/
