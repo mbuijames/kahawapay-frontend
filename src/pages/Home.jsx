@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
-   // <div className="bg-gradient-to-b from-white to-gray-50 min-h-screen">
+   <div className="bg-gradient-to-b from-white to-gray-50 min-h-screen">
       {/* ✅ Top Banner (Rates + Bitcoin) */}
-     // <KahawaPayHero />
+      <KahawaPayHero />
 
       {/* Hero Section */}
       <div className="text-center py-16 px-6">
