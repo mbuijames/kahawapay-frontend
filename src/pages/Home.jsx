@@ -15,7 +15,7 @@ export default function Home() {
           {/* Text Content */}
           <div className="flex-1">
             <h1 className="text-4xl sm:text-5xl font-extrabold text-kahawa-dark mb-6 leading-tight">
-              Buy Your Buddies Back Home a Coffee ☕
+              Buy Your Buddies Back Home a Coffee 
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-700 max-w-xl mx-auto mb-8">
