@@ -21,7 +21,7 @@ import TwoFAPrompt from "./pages/TwoFAPrompt.jsx";
 import About from "./pages/About.jsx";
 import FAQ from "./pages/FAQ.jsx";
 import AccountSettings from "./pages/AccountSettings.jsx";
-import KahawaPayHero from "./components/KahawaPayHero";
+
 
 // --- Inline route guards ---
 function RequireAuth({ children }) {
