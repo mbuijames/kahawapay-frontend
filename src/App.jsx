@@ -89,10 +89,8 @@ function Shell({ user, setUser }) {
             )}
           </div>
         </div>
-      /*</nav>
-		 {/* Top banner (appears on every page) */}
-      <KahawaPayHero />
-	*/
+      </nav>
+		
       {/* Routes */}
       <main className="flex-1 max-w-4xl mx-auto px-4">
         <Routes>
