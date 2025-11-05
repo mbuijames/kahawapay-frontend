@@ -1,9 +1,19 @@
 // src/components/KahawaPayHero.jsx
 import React, { useEffect, useState } from "react";
 
-const API_BASE = "https://kahawapay-backend.onrender.com";
-const CACHE_KEY = "kahawapay_rates_ui_v3";
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
+/**
+ * KahawaPayHero.jsx
+ * Top banner — shows BTC + selected central-bank rates.
+ *
+ * Configure VITE_RATES_API_URL in your frontend env (Render UI) to point
+ * to your backend (e.g. https://kahawapay-backend.onrender.com).
+ *
+ * If the env var is missing, DEFAULT_API is used as a fallback (replace it with your real URL).
+ */
+
+const DEFAULT_API = "https://kahawapay-backend.onrender.com"; // <-- REPLACE this with your real backend URL if different
+const CACHE_KEY = "kahawapay_rates_ui_v1";
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function readCache() {
   try {
@@ -15,43 +25,56 @@ function readCache() {
       return null;
     }
     return parsed.data;
-  } catch {
+  } catch (e) {
     return null;
   }
 }
 function writeCache(data) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-  } catch {}
+  } catch (e) {}
 }
 
-export default function KahawaPayHero({ title = "Our Competitive Market Prices" }) {
+export default function KahawaPayHero() {
   const [rates, setRates] = useState(() => readCache());
   const [loading, setLoading] = useState(!rates);
   const [error, setError] = useState(null);
 
-  const endpoint = `${API_BASE}/api/rates`;
+  // Use Vite env var if configured; otherwise use DEFAULT_API
+  const apiBase = (import.meta.env.VITE_RATES_API_URL || DEFAULT_API).replace(/\/$/, "");
+  const endpoint = `${apiBase}/api/rates`;
 
   useEffect(() => {
-    if (rates) return; // already cached
-
+    if (rates) return; // we have fresh UI cache
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    fetch(endpoint)
+    fetch(endpoint, { mode: "cors" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("text/html")) {
+          throw new Error("unexpected HTML response (likely wrong host)");
+        }
         return res.json();
       })
       .then((json) => {
         if (cancelled) return;
-        setRates(json);
-        writeCache(json);
+        const normalized = {
+          btc_usd: json?.btc_usd ?? json?.bitcoinUsd ?? null,
+          kes_per_usd: json?.kes_per_usd ?? json?.kesUsd ?? json?.kes ?? null,
+          ugx_per_usd: json?.ugx_per_usd ?? json?.ugxUsd ?? json?.ugx ?? null,
+          tzs_per_usd: json?.tzs_per_usd ?? json?.tzsUsd ?? json?.tzs ?? null,
+          inr_per_usd: json?.inr_per_usd ?? json?.inrUsd ?? json?.inr ?? null,
+          fetched_at: json?.fetched_at ?? json?.lastUpdated ?? new Date().toISOString(),
+        };
+        setRates(normalized);
+        writeCache(normalized);
       })
       .catch((err) => {
         console.error("Failed to load rates:", err);
-        if (!cancelled) setError(err.message);
+        if (!cancelled) setError(err.message || "failed");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -60,35 +83,58 @@ export default function KahawaPayHero({ title = "Our Competitive Market Prices" 
     return () => {
       cancelled = true;
     };
-  }, [endpoint]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // endpoint is stable; keep empty deps to avoid repeated calls
+
+  const fmt = (v) => {
+    if (v === null || v === undefined) return "N/A";
+    if (typeof v === "number") return v.toLocaleString();
+    const n = Number(String(v).replace(/,/g, ""));
+    return Number.isFinite(n) ? n.toLocaleString() : String(v);
+  };
 
   return (
-    <div className="bg-white shadow-md border-b border-gray-300">
-      <div className="max-w-5xl mx-auto px-4 py-4">
-        <div className="flex justify-between items-center mb-2">
-          <h1 className="text-xl font-bold text-brown-800">{title}</h1>
-          {rates?.fetchedAt && (
-            <span className="text-xs text-gray-500">
-              Updated: {new Date(rates.fetchedAt).toLocaleString()}
-            </span>
-          )}
+    <div className="bg-transparent">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="border-4 border-black h-16 rounded-sm bg-white flex items-center p-4">
+          <div className="w-full flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              <div>
+                <strong>Bitcoin</strong>{" "}
+                {loading && !rates ? (
+                  <span> = Loading…</span>
+                ) : (
+                  <span> = ${fmt(rates?.btc_usd)}</span>
+                )}
+                <span className="ml-2 text-xs text-gray-500">(source: backend)</span>
+              </div>
+
+              <div className="mt-1 text-xs text-gray-700">
+                <strong>KES / USD</strong> = {fmt(rates?.kes_per_usd)} <span className="text-xs text-gray-500">(CBK)</span>
+                {" — "}
+                <strong>UGX / USD</strong> = {fmt(rates?.ugx_per_usd)} <span className="text-xs text-gray-500">(BoU)</span>
+                {" — "}
+                <strong>TZS / USD</strong> = {fmt(rates?.tzs_per_usd)} <span className="text-xs text-gray-500">(BoT)</span>
+                {" — "}
+                <strong>INR / USD</strong> = {fmt(rates?.inr_per_usd)} <span className="text-xs text-gray-500">(RBI)</span>
+              </div>
+            </div>
+
+            <div className="text-right text-xs text-gray-500">
+              <div>
+                Updated:{" "}
+                {rates?.fetched_at ? new Date(rates.fetched_at).toLocaleString() : "-"}
+              </div>
+              <div className="mt-1">
+                {error ? <span className="text-red-600">Error fetching rates</span> : <span>Official central banks & CoinGecko</span>}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {loading && <p className="text-gray-500 text-sm">Loading latest rates…</p>}
         {error && (
-          <p className="text-red-600 text-sm">
-            Failed to fetch rates ({error}). Please try again later.
-          </p>
-        )}
-
-        {!loading && rates?.rates && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-2 text-sm">
-            {Object.entries(rates.rates).map(([currency, value]) => (
-              <div key={currency} className="flex justify-between">
-                <span>{currency}</span>
-                <span className="font-medium">{Number(value).toLocaleString()}</span>
-              </div>
-            ))}
+          <div className="mt-2 text-sm text-red-600">
+            Failed to fetch rates from backend ({error}). Check backend server or console.
           </div>
         )}
       </div>
