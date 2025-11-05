@@ -25,7 +25,7 @@ function writeCache(data) {
   } catch {}
 }
 
-export default function KahawaPayHero({ title = "Bond" }) {
+export default function KahawaPayHero({ title = "Our Competitive Market Prices" }) {
   const [rates, setRates] = useState(() => readCache());
   const [loading, setLoading] = useState(!rates);
   const [error, setError] = useState(null);
