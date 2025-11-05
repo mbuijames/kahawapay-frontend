@@ -3,13 +3,15 @@ import React, { useEffect, useState } from "react";
 
 /**
  * KahawaPayHero.jsx
- * Minimal top banner only — shows BTC + selected central-bank rates.
- * Designed to replace your previous top-banner component so it does NOT duplicate the main hero body.
+ * Top banner — shows BTC + selected central-bank rates.
  *
- * Backend: expects an endpoint at `${API_BASE}/api/rates` returning the JSON produced by the backend proxy.
+ * Configure VITE_RATES_API_URL in your frontend env (Render UI) to point
+ * to your backend (e.g. https://kahawapay-backend.onrender.com).
+ *
+ * If the env var is missing, DEFAULT_API is used as a fallback (replace it with your real URL).
  */
 
-const res = await fetch("https://kahawapay-backend.onrender.com/api/rates");
+const DEFAULT_API = "https://kahawapay-backend.onrender.com"; // <-- REPLACE this with your real backend URL if different
 const CACHE_KEY = "kahawapay_rates_ui_v1";
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -38,6 +40,7 @@ export default function KahawaPayHero() {
   const [loading, setLoading] = useState(!rates);
   const [error, setError] = useState(null);
 
+  // Use Vite env var if configured; otherwise use DEFAULT_API
   const apiBase = (import.meta.env.VITE_RATES_API_URL || DEFAULT_API).replace(/\/$/, "");
   const endpoint = `${apiBase}/api/rates`;
 
@@ -47,15 +50,19 @@ export default function KahawaPayHero() {
     setLoading(true);
     setError(null);
 
-    fetch(endpoint)
+    fetch(endpoint, { mode: "cors" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("text/html")) {
+          throw new Error("unexpected HTML response (likely wrong host)");
+        }
         return res.json();
       })
       .then((json) => {
         if (cancelled) return;
         const normalized = {
-          btc_usd: json?.btc_usd ?? json?.bitcoinUsd ?? json?.bitcoinUsd ?? null,
+          btc_usd: json?.btc_usd ?? json?.bitcoinUsd ?? null,
           kes_per_usd: json?.kes_per_usd ?? json?.kesUsd ?? json?.kes ?? null,
           ugx_per_usd: json?.ugx_per_usd ?? json?.ugxUsd ?? json?.ugx ?? null,
           tzs_per_usd: json?.tzs_per_usd ?? json?.tzsUsd ?? json?.tzs ?? null,
@@ -76,7 +83,8 @@ export default function KahawaPayHero() {
     return () => {
       cancelled = true;
     };
-  }, [endpoint]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // endpoint is stable; keep empty deps to avoid repeated calls
 
   const fmt = (v) => {
     if (v === null || v === undefined) return "N/A";
