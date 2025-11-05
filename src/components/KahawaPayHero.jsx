@@ -1,30 +1,22 @@
-// src/components/KahawaPayHero.tsx
-import React, { useEffect, useState } from "react";
-import { fetchRates, RatesNormalized } from "../utils/fetchRates";
+// src/components/KahawaPayHero.jsx
+// Default export React component. Uses Tailwind classes.
+// Expects an environment variable VITE_RATES_API_URL (e.g. https://kahawapay-backend.onrender.com)
 
-/**
- * KahawaPayHero.tsx
- * Reads /api/rates which returns { rates: { "US Dollar": 127.5, ... }, fetchedAt, source }
- * Displays "Our Competitive Market Prices" and shows KES/UGX/TZS/INR prominently,
- * then all other currencies in a compact grid. Keeps a 10m local cache.
- */
+import React, { useEffect, useState } from 'react';
+import { fetchRates } from '../utils/fetchRates';
 
 const DEFAULT_API = (import.meta.env.VITE_RATES_API_URL || "https://kahawapay-backend.onrender.com").replace(/\/$/, "");
 const ENDPOINT = `${DEFAULT_API}/api/rates`;
+
+// caching helpers (plain JS)
 const CACHE_KEY = "kahawapay_rates_ui_v1";
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-type CacheShape = { ts: number; data: {
-  rates: Record<string, number | string>;
-  fetchedAt?: string;
-  source?: string;
-} };
-
-function readCache(): CacheShape["data"] | null {
+function readCache() {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as CacheShape;
+    const parsed = JSON.parse(raw);
     if (Date.now() - (parsed.ts || 0) > CACHE_TTL_MS) {
       localStorage.removeItem(CACHE_KEY);
       return null;
@@ -34,16 +26,16 @@ function readCache(): CacheShape["data"] | null {
     return null;
   }
 }
-function writeCache(data: CacheShape["data"]) {
+function writeCache(data) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
   } catch {}
 }
 
-export default function KahawaPayHero(): JSX.Element {
-  const [data, setData] = useState<CacheShape["data"] | null>(() => readCache());
-  const [loading, setLoading] = useState<boolean>(!Boolean(data));
-  const [error, setError] = useState<string | null>(null);
+export default function KahawaPayHero() {
+  const [data, setData] = useState(() => readCache());
+  const [loading, setLoading] = useState(!data);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (data) return; // cached
@@ -60,18 +52,17 @@ export default function KahawaPayHero(): JSX.Element {
       })
       .then((json) => {
         if (cancelled) return;
-        // Expecting { rates: {...}, fetchedAt: "...", source: "..." }
         const normalized = {
-          rates: (json?.rates || json?.data || {}) as Record<string, number | string>,
+          rates: json?.rates || json?.data || {},
           fetchedAt: json?.fetchedAt || json?.lastUpdated || json?.fetched_at || new Date().toISOString(),
           source: json?.source || null,
         };
         setData(normalized);
         writeCache(normalized);
       })
-      .catch((err: unknown) => {
+      .catch((err) => {
         console.error("KahawaPayHero: failed to load rates:", err);
-        if (!cancelled) setError((err as Error)?.message || "Failed to load rates");
+        if (!cancelled) setError(err.message || "Failed to load rates");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -82,7 +73,7 @@ export default function KahawaPayHero(): JSX.Element {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fmt = (v: number | string | null | undefined) => {
+  const fmt = (v) => {
     if (v === null || v === undefined) return "N/A";
     if (typeof v === "number") return v.toLocaleString();
     const n = Number(String(v).replace(/,/g, ""));
@@ -90,18 +81,15 @@ export default function KahawaPayHero(): JSX.Element {
   };
 
   const mainCurrencies = [
-    { key: "US Dollar", label: "KES / USD", pick: (rates: Record<string, any>) => rates["US Dollar"] ?? rates["USD"] ?? rates["US Dollar (KES)"] ?? null },
-    { key: "Uganda Shilling", label: "UGX / USD", pick: (rates: Record<string, any>) => rates["Uganda Shilling"] ?? null },
-    { key: "Tanzanian Shilling", label: "TZS / USD", pick: (rates: Record<string, any>) => rates["Tanzanian Shilling"] ?? rates["Tanzania Shilling"] ?? null },
-    { key: "Indian Rupee", label: "INR / USD", pick: (rates: Record<string, any>) => rates["Indian Rupee"] ?? null },
+    { key: "US Dollar", label: "KES / USD", pick: (rates) => rates["US Dollar"] ?? rates["USD"] ?? rates["US Dollar (KES)"] ?? null },
+    { key: "Uganda Shilling", label: "UGX / USD", pick: (rates) => rates["Uganda Shilling"] ?? null },
+    { key: "Tanzanian Shilling", label: "TZS / USD", pick: (rates) => rates["Tanzanian Shilling"] ?? rates["Tanzania Shilling"] ?? null },
+    { key: "Indian Rupee", label: "INR / USD", pick: (rates) => rates["Indian Rupee"] ?? null },
   ];
 
-  // If fetchRates util exists and returns normalized shapes, prefer using it
-  // but maintain backwards compatibility with raw data from cached `data`.
-  const ratesObj: Record<string, number | string> = (data && data.rates) || {};
-
+  const ratesObj = (data && data.rates) || {};
   const mainKeys = new Set(["US Dollar", "Uganda Shilling", "Tanzanian Shilling", "Tanzania Shilling", "Indian Rupee"]);
-  const otherEntries = Object.entries(ratesObj).filter(([k]) => !mainKeys.has(k)).slice(0, 40); // limit
+  const otherEntries = Object.entries(ratesObj).filter(([k]) => !mainKeys.has(k)).slice(0, 40);
 
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
@@ -130,7 +118,6 @@ export default function KahawaPayHero(): JSX.Element {
 
           {!loading && !error && (
             <>
-              {/* Prominent main currencies row */}
               <div className="flex flex-wrap gap-4 items-center mb-3">
                 {mainCurrencies.map((mc) => {
                   const v = mc.pick(ratesObj);
@@ -143,7 +130,6 @@ export default function KahawaPayHero(): JSX.Element {
                 })}
               </div>
 
-              {/* Grid of other currencies */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-sm">
                 {otherEntries.map(([currency, value]) => (
                   <div key={currency} className="flex justify-between px-3 py-2 bg-white border rounded">
