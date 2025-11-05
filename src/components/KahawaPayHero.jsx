@@ -9,7 +9,7 @@ import React, { useEffect, useState } from "react";
  * Backend: expects an endpoint at `${API_BASE}/api/rates` returning the JSON produced by the backend proxy.
  */
 
-const DEFAULT_API = "http://localhost:4000";
+const res = await fetch("https://kahawapay-backend.onrender.com/api/rates");
 const CACHE_KEY = "kahawapay_rates_ui_v1";
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
