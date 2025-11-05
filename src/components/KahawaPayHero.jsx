@@ -1,9 +1,9 @@
 // src/components/KahawaPayHero.jsx
 import React, { useEffect, useState } from "react";
 
-const DEFAULT_API = "https://kahawapay-backend.onrender.com";
-const CACHE_KEY = "kahawapay_rates_ui_v2";
-const CACHE_TTL_MS = 10 * 60 * 1000;
+const API_BASE = "https://kahawapay-backend.onrender.com";
+const CACHE_KEY = "kahawapay_rates_ui_v3";
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
 
 function readCache() {
   try {
@@ -19,23 +19,22 @@ function readCache() {
     return null;
   }
 }
-
 function writeCache(data) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
   } catch {}
 }
 
-export default function KahawaPayHero() {
-  const [data, setData] = useState(() => readCache());
-  const [loading, setLoading] = useState(!data);
+export default function KahawaPayHero({ title = "Bond" }) {
+  const [rates, setRates] = useState(() => readCache());
+  const [loading, setLoading] = useState(!rates);
   const [error, setError] = useState(null);
 
-  const apiBase = (import.meta.env.VITE_RATES_API_URL || DEFAULT_API).replace(/\/$/, "");
-  const endpoint = `${apiBase}/api/rates`;
+  const endpoint = `${API_BASE}/api/rates`;
 
   useEffect(() => {
-    if (data) return;
+    if (rates) return; // already cached
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -47,11 +46,11 @@ export default function KahawaPayHero() {
       })
       .then((json) => {
         if (cancelled) return;
-        setData(json);
+        setRates(json);
         writeCache(json);
       })
       .catch((err) => {
-        console.error("Failed to fetch CBK rates:", err);
+        console.error("Failed to load rates:", err);
         if (!cancelled) setError(err.message);
       })
       .finally(() => {
@@ -63,38 +62,33 @@ export default function KahawaPayHero() {
     };
   }, [endpoint]);
 
-  const fmt = (v) => (v ? v.toLocaleString() : "N/A");
-
   return (
-    <div className="bg-white border-b border-gray-300 shadow-sm">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-gray-800 space-y-1">
-          <div className="font-semibold text-lg text-brown-800">KahawaPay Bond Rates</div>
-
-          {loading ? (
-            <div className="text-gray-500 text-sm">Loading rates…</div>
-          ) : error ? (
-            <div className="text-red-600 text-sm">
-              Failed to load rates ({error})
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 text-sm">
-              {Object.entries(data?.rates || {}).map(([currency, rate]) => (
-                <div key={currency} className="flex justify-between">
-                  <span>{currency}</span>
-                  <span className="font-medium">{fmt(rate)}</span>
-                </div>
-              ))}
-            </div>
+    <div className="bg-white shadow-md border-b border-gray-300">
+      <div className="max-w-5xl mx-auto px-4 py-4">
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-xl font-bold text-brown-800">{title}</h1>
+          {rates?.fetchedAt && (
+            <span className="text-xs text-gray-500">
+              Updated: {new Date(rates.fetchedAt).toLocaleString()}
+            </span>
           )}
         </div>
 
-        {!loading && !error && (
-          <div className="text-xs text-gray-500 text-right mt-2 sm:mt-0">
-            Updated:{" "}
-            {data?.fetchedAt
-              ? new Date(data.fetchedAt).toLocaleString()
-              : "-"}
+        {loading && <p className="text-gray-500 text-sm">Loading latest rates…</p>}
+        {error && (
+          <p className="text-red-600 text-sm">
+            Failed to fetch rates ({error}). Please try again later.
+          </p>
+        )}
+
+        {!loading && rates?.rates && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+            {Object.entries(rates.rates).map(([currency, value]) => (
+              <div key={currency} className="flex justify-between">
+                <span>{currency}</span>
+                <span className="font-medium">{Number(value).toLocaleString()}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
