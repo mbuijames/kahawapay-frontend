@@ -3,7 +3,7 @@
 // Expects an environment variable VITE_RATES_API_URL (e.g. https://kahawapay-backend.onrender.com)
 
 import React, { useEffect, useState } from 'react';
-import { fetchRates } from '../utils/fetchRates';
+import { fetchRates } from '../utils/fetchRates.js';
 
 const DEFAULT_API = (import.meta.env.VITE_RATES_API_URL || "https://kahawapay-backend.onrender.com").replace(/\/$/, "");
 const ENDPOINT = `${DEFAULT_API}/api/rates`;
