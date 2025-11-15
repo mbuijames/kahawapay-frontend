@@ -1,6 +1,6 @@
 // src/components/KahawaPayHero.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { fetchRates } from '../utils/fetchRates.js'; // <- ensure .js extension
+import { fetchRates } from '../utils/fetchRates.js';
 
 const CACHE_KEY = 'kahawapay_rates_ui_v1';
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -19,7 +19,6 @@ function readCache() {
     return null;
   }
 }
-
 function writeCache(data) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
@@ -36,7 +35,6 @@ export default function KahawaPayHero() {
     setError(null);
     try {
       const result = await fetchRates(opts);
-      // result should be normalized by client helper (see utils)
       setData(result);
       writeCache(result);
     } catch (err) {
@@ -47,14 +45,10 @@ export default function KahawaPayHero() {
   }, []);
 
   useEffect(() => {
-    if (!data) {
-      load();
-    }
-    const id = setInterval(() => load(), 60 * 1000); // background refresh
+    if (!data) load();
+    const id = setInterval(() => load(), 60 * 1000);
     return () => clearInterval(id);
   }, [data, load]);
-
-  const onRetry = () => load({ baseUrl: undefined });
 
   const fmt = (v) => {
     if (v === null || v === undefined) return '—';
@@ -98,13 +92,8 @@ export default function KahawaPayHero() {
               <span className="text-sm text-slate-600">Loading rates…</span>
             </div>
           ) : error ? (
-            <div className="text-sm text-red-600 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>Failed to load rates ({error}). Check backend or try again later.</div>
-              <div>
-                <button onClick={onRetry} className="mt-2 sm:mt-0 inline-flex items-center px-3 py-1.5 bg-sky-600 text-white rounded-md text-sm shadow">
-                  Retry
-                </button>
-              </div>
+            <div className="text-sm text-red-600 py-3">
+              Failed to load rates ({error}). Check backend or try again later.
             </div>
           ) : !ratesObj || (Object.keys(ratesObj).length === 0) ? (
             <div className="text-sm text-slate-600 py-3">No rates available</div>
@@ -129,7 +118,11 @@ export default function KahawaPayHero() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-sm">
                 {Object.entries(ratesObj)
-                  .filter(([k]) => !['btc_usd', 'bitcoinUsd', 'bitcoin', 'kes_per_usd', 'kesUsd', 'US Dollar', 'KES', 'ugx_per_usd', 'ugxUsd', 'Uganda Shilling'].includes(k))
+                  .filter(([k]) => ![
+                    'btc_usd','bitcoinUsd','bitcoin',
+                    'kes_per_usd','kesUsd','US Dollar','KES',
+                    'ugx_per_usd','ugxUsd','Uganda Shilling'
+                  ].includes(k))
                   .slice(0, 40)
                   .map(([currency, value]) => (
                     <div key={currency} className="flex justify-between px-3 py-2 bg-white border rounded">
