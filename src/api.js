@@ -15,6 +15,15 @@ export const api = axios.create({ baseURL: API_BASE });
 // 👇 Guest USD limit from env (frontend-visible)
 export const GUEST_TX_LIMIT_USD = Number(import.meta.env?.VITE_GUEST_TX_LIMIT_USD ?? 100);
 
+// Existing function called by React
+export async function registerUser(email, password) {
+  return axios.post("/register", { email, password });
+}
+
+// New OTP verification (UI already collects OTP)
+export async function verifyOtp(email, otp) {
+  return axios.post("/verify-otp", { email, otp });
+}
 /* ------------------------------------------
  * AUTH TOKEN HELPERS
  * ------------------------------------------ */
