@@ -2,28 +2,93 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-/**
- * CONFIG
- * - Set VITE_API_BASE to your backend origin only, e.g. "http://localhost:5000"
- *   (do NOT include /api here)
- * - All endpoints below include "/api/..." so they work consistently.
- */
+/* ------------------------------------------
+ * BASE URL (no /api here)
+ * ------------------------------------------ */
 const API_BASE = import.meta.env?.VITE_API_BASE || "http://localhost:5000";
 
 export const api = axios.create({ baseURL: API_BASE });
 
-// 👇 Guest USD limit from env (frontend-visible)
+/* Guest transaction limit (for UI only) */
 export const GUEST_TX_LIMIT_USD = Number(import.meta.env?.VITE_GUEST_TX_LIMIT_USD ?? 100);
 
-// Existing function called by React
+/* ------------------------------------------
+ * AUTH API CALLS (REGISTER + OTP + LOGIN)
+ * ------------------------------------------ */
+
+// 1️⃣ REGISTER USER → backend generates OTP + emails it
 export async function registerUser(email, password) {
-  return axios.post("/register", { email, password });
+  try {
+    const { data } = await api.post(
+      `/api/auth/register`,
+      { email, password },
+      { headers: { "Content-Type": "application/json" } }
+    );
+    return data; // { message: "...", otpSent: true }
+  } catch (err) {
+    const msg =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      "Registration failed. Please try again.";
+
+    console.error("🔥 registerUser error:", msg);
+    throw new Error(msg);
+  }
 }
 
-// New OTP verification (UI already collects OTP)
+// 2️⃣ VERIFY OTP
 export async function verifyOtp(email, otp) {
-  return axios.post("/verify-otp", { email, otp });
+  try {
+    const { data } = await api.post(
+      `/api/auth/verify-otp`,
+      { email, otp },
+      { headers: { "Content-Type": "application/json" } }
+    );
+    return data; // { verified: true }
+  } catch (err) {
+    const msg =
+      err?.response?.data?.error ||
+      "OTP verification failed. Try again.";
+    throw new Error(msg);
+  }
 }
+
+// 3️⃣ LOGIN USER
+export async function loginUser(email, password) {
+  try {
+    const { data } = await api.post(
+      `/api/auth/login`,
+      { email, password },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    // support 2FA if backend uses it
+    if (data?.requires2fa && data?.tempToken) {
+      return { requires2fa: true, tempToken: data.tempToken, email };
+    }
+
+    const { token, role, email: userEmail } = data || {};
+    if (!token || !role || !userEmail) {
+      throw new Error("Invalid login response from server");
+    }
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+    localStorage.setItem("email", userEmail);
+    setAuth(token);
+
+    return { token, role, email: userEmail };
+  } catch (err) {
+    const msg =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      "Login failed. Please try again.";
+
+    console.error("🔥 loginUser error:", msg);
+    throw new Error(msg);
+  }
+}
+
 /* ------------------------------------------
  * AUTH TOKEN HELPERS
  * ------------------------------------------ */
@@ -44,67 +109,16 @@ export function logoutUser() {
 }
 
 /* ------------------------------------------
- * AUTH: LOGIN / REGISTER
- * ------------------------------------------ */
-export async function loginUser(email, password) {
-  try {
-    const { data } = await api.post(`/api/auth/login`, { email, password }, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-    // 2FA path support (if your backend returns it)
-    if (data?.requires2fa && data?.tempToken) {
-      return { requires2fa: true, tempToken: data.tempToken, email };
-    }
-
-    const { token, role, email: userEmail } = data || {};
-    if (!token || !role || !userEmail) {
-      throw new Error("Invalid login response from server");
-    }
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", role);
-    localStorage.setItem("email", userEmail);
-    setAuth(token);
-
-    return { token, role, email: userEmail };
-  } catch (err) {
-    const msg =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      err?.message ||
-      "Login failed. Please try again.";
-    console.error("🔥 loginUser error:", msg, err?.response?.data || "");
-    throw new Error(msg);
-  }
-}
-
-export async function registerUser(email, password) {
-  try {
-    const { data } = await api.post(`/api/auth/register`, { email, password }, {
-      headers: { "Content-Type": "application/json" },
-    });
-    return data;
-  } catch (err) {
-    const msg =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      "Registration failed. Please try again.";
-    console.error("🔥 registerUser error:", msg, err?.response?.data || "");
-    throw new Error(msg);
-  }
-}
-
-/* ------------------------------------------
- * WALLET / SETTINGS HELPERS
+ * WALLET / SETTINGS HELPERS (unchanged)
  * ------------------------------------------ */
 export async function getDepositAddress() {
   try {
     const { data } = await api.get(`/api/wallet/deposit-address`, {
-      params: { _ts: Date.now() }, // cache-bust
+      params: { _ts: Date.now() },
     });
+
     if (!data?.address) throw new Error("No address returned");
-    return data; // { address: "..." }
+    return data;
   } catch (err) {
     console.error("❌ getDepositAddress error:", {
       url: `${API_BASE}/api/wallet/deposit-address`,
@@ -130,23 +144,21 @@ export async function getCurrencies() {
   }
 }
 
-/**
- * Preview calculator (frontend fallback mock).
- * Your app often computes on the backend; keep this for quick previews if needed.
- */
+/* ------------------------------------------
+ * PREVIEW CALCULATOR (unchanged)
+ * ------------------------------------------ */
 export async function previewTransaction(btcAmount, currency) {
   if (!btcAmount || !currency) throw new Error("BTC amount and currency required");
 
-  const btcToUsdRate = 117000; // demo rate
+  const btcToUsdRate = 117000;
   const fxRates = { KES: 129, UGX: 3800, TZS: 2600 };
   if (!fxRates[currency]) throw new Error("Unsupported currency");
 
   const usdValue = btcAmount * btcToUsdRate;
 
-  // Guest limit (UX-only; backend still enforces)
   const token = localStorage.getItem("token");
   if (!token && usdValue > GUEST_TX_LIMIT_USD) {
-    throw new Error(`Guests cannot preview amounts above $${GUEST_TX_LIMIT_USD.toLocaleString()}`);
+    throw new Error(`Guests cannot preview amounts above $${GUEST_TX_LIMIT_USD}`);
   }
 
   const feePercent = 2;
@@ -176,7 +188,7 @@ export async function previewTransaction(btcAmount, currency) {
 })();
 
 /* ------------------------------------------
- * ALWAYS ATTACH TOKEN
+ * ATTACH TOKEN ALWAYS
  * ------------------------------------------ */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -190,6 +202,7 @@ api.interceptors.request.use((config) => {
 export function getCurrentUser() {
   const token = localStorage.getItem("token");
   if (!token) return null;
+
   try {
     const decoded = jwtDecode(token);
     return {
