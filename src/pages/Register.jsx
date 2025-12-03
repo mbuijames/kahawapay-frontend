@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../api";
+import { registerUser, verifyOtp } from "../api";
 
 export default function Register() {
   const [step, setStep] = useState(1);
@@ -41,30 +41,25 @@ export default function Register() {
     }
   };
 
-  const handleVerifyOtp = (e) => {
+  // ✅ FIXED: Only ONE handleVerifyOtp function
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     resetMessages();
 
-  const handleVerifyOtp = async (e) => {
-  e.preventDefault();
-  resetMessages();
+    setLoading(true);
+    try {
+      await verifyOtp(email, otp); // backend OTP confirm
 
-  setLoading(true);
-  try {
-    await verifyOtp(email, otp); // <-- now uses backend instead of 123456
+      localStorage.setItem("userEmail", email);
+      setSuccess("✅ Registration complete. Redirecting...");
 
-    localStorage.setItem("userEmail", email);
-
-    setSuccess("✅ Registration complete. Redirecting...");
-    setTimeout(() => navigate("/login"), 1500);
-  } catch (err) {
-    setError(err.message || "❌ Invalid OTP");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err) {
+      setError(err.message || "❌ Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white shadow-lg rounded-lg p-6">
@@ -116,7 +111,7 @@ export default function Register() {
         <form onSubmit={handleVerifyOtp} className="space-y-4">
           <input
             type="text"
-            placeholder="Enter OTP (123456)"
+            placeholder="Enter OTP"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             required
@@ -125,9 +120,10 @@ export default function Register() {
           />
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700"
           >
-            Verify OTP
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
       )}
