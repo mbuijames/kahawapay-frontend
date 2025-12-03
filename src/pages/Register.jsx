@@ -51,16 +51,19 @@ export default function Register() {
 
   setLoading(true);
   try {
-    await verifyOtp(email, otp);  // backend check
+    await verifyOtp(email, otp); // <-- now uses backend instead of 123456
+
     localStorage.setItem("userEmail", email);
+
     setSuccess("✅ Registration complete. Redirecting...");
     setTimeout(() => navigate("/login"), 1500);
   } catch (err) {
-    setError(err.response?.data?.error || "❌ Invalid OTP");
+    setError(err.message || "❌ Invalid OTP");
   } finally {
     setLoading(false);
   }
 };
+
 
 
   return (
