@@ -45,14 +45,23 @@ export default function Register() {
     e.preventDefault();
     resetMessages();
 
-    if (otp === "123456") {
-      localStorage.setItem("userEmail", email);
-      setSuccess("✅ Registration complete. Please login.");
-      setTimeout(() => navigate("/login"), 1500); // redirect after short delay
-    } else {
-      setError("❌ Invalid OTP (use 123456)");
-    }
-  };
+  const handleVerifyOtp = async (e) => {
+  e.preventDefault();
+  resetMessages();
+
+  setLoading(true);
+  try {
+    await verifyOtp(email, otp);  // backend check
+    localStorage.setItem("userEmail", email);
+    setSuccess("✅ Registration complete. Redirecting...");
+    setTimeout(() => navigate("/login"), 1500);
+  } catch (err) {
+    setError(err.response?.data?.error || "❌ Invalid OTP");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white shadow-lg rounded-lg p-6">
