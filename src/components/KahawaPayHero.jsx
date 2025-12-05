@@ -39,7 +39,7 @@ export default function KahawaPayHero() {
     setError(null);
 
     try {
-      const result = await fetchRates(); // Backend fetch
+      const result = await fetchRates();
       setData(result);
       writeCache(result);
     } catch (err) {
@@ -62,10 +62,7 @@ export default function KahawaPayHero() {
     return Number.isFinite(num) ? num.toLocaleString() : v;
   };
 
-  // Backend may return { rates: [...] } OR [...]
   const rows = Array.isArray(data?.rates) ? data.rates : Array.isArray(data) ? data : [];
-
-  // Filter OUT FEE currency
   const filteredRows = rows.filter(r => (r.target_currency || "").toUpperCase() !== "FEE");
 
   const lastUpdated = data?.lastUpdated ?? null;
@@ -74,7 +71,7 @@ export default function KahawaPayHero() {
     <section className="w-full bg-gradient-to-r from-sky-50 to-white border-b shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        {/* HEADER / TITLE */}
+        {/* HEADER */}
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 rounded-2xl bg-white p-2 shadow">
             <svg width="40" height="40" viewBox="0 0 24 24">
@@ -94,10 +91,9 @@ export default function KahawaPayHero() {
             <div>Updated: {new Date(lastUpdated).toLocaleString()}</div>
           ) : null}
         </div>
-
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN CARD */}
       <div className="max-w-6xl mx-auto px-4 pb-4">
         <div className="w-full bg-white rounded-2xl p-3 shadow-sm mt-2">
 
@@ -126,10 +122,7 @@ export default function KahawaPayHero() {
                   const price = r.rate ?? r.value ?? null;
 
                   return (
-                    <div
-                      key={idx}
-                      className="px-3 py-2 bg-gray-50 rounded-md border shadow-sm min-w-[150px]"
-                    >
+                    <div key={idx} className="px-3 py-2 bg-gray-50 rounded-md border shadow-sm min-w-[150px]">
                       <div className="text-xs text-gray-600">
                         {target} / {base}
                       </div>
@@ -139,7 +132,22 @@ export default function KahawaPayHero() {
                 })}
               </div>
 
-              <div className="text-xs text-slate-500">
+              {/* BUTTONS INSERTED HERE */}
+              <div className="flex flex-wrap gap-3 mt-4">
+
+                {/* KP LOG BUTTON */}
+                <button className="w-full sm:w-auto bg-kahawa/10 text-kahawa dark:text-kahawa-dark rounded-xl py-2 px-4 hover:bg-kahawa/20 transition">
+                  KP Log
+                </button>
+
+                {/* CURRENCY BUTTON */}
+                <button className="bg-kahawa text-white font-semibold rounded-xl py-2 px-4 shadow-md hover:bg-kahawa-dark transition active:scale-95">
+                  Select Currency
+                </button>
+
+              </div>
+
+              <div className="text-xs text-slate-500 mt-4">
                 Source: {data?.source ?? "unknown"}
                 {lastUpdated && ` • Updated: ${new Date(lastUpdated).toLocaleString()}`}
               </div>
