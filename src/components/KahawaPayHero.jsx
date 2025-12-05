@@ -69,42 +69,40 @@ export default function KahawaPayHero() {
 
   return (
     <section className="w-full bg-gradient-to-r from-sky-50 to-white border-b shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 py-4">
 
         {/* HEADER */}
-<div className="flex items-center gap-3">
-  <div className="flex-shrink-0 rounded-2xl bg-white p-2 shadow">
-    <svg width="40" height="40" viewBox="0 0 24 24">
-      <rect width="24" height="24" rx="6" fill="#0ea5e9" />
-      <text
-        x="50%"
-        y="53%"
-        textAnchor="middle"
-        fontWeight="700"
-        fontSize="12"
-        fill="white"
-      >
-        KP
-      </text>
-    </svg>
-  </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 rounded-2xl bg-white p-2 shadow">
+            <svg width="40" height="40" viewBox="0 0 24 24">
+              <rect width="24" height="24" rx="6" fill="#0ea5e9" />
+              <text
+                x="50%"
+                y="53%"
+                textAnchor="middle"
+                fontWeight="700"
+                fontSize="12"
+                fill="white"
+              >
+                KP
+              </text>
+            </svg>
+          </div>
 
-  <div>
-    <h1 className="text-lg font-semibold">Our Competitive Market Prices</h1>
-    <p className="text-sm text-slate-500">
-      Live indicative rates — updated automatically
-    </p>
-  </div>
-</div>
-
-              <div className="text-xs text-slate-500 mt-4">
-                Source: {data?.source ?? "unknown"}
-                {lastUpdated && ` • Updated: ${new Date(lastUpdated).toLocaleString()}`}
-              </div>
-            </>
-          )}
-
+          <div>
+            <h1 className="text-lg font-semibold">Our Competitive Market Prices</h1>
+            <p className="text-sm text-slate-500">
+              Live indicative rates — updated automatically
+            </p>
+          </div>
         </div>
+
+        {/* LAST UPDATED */}
+        <div className="text-xs text-slate-500 mt-4">
+          Source: {data?.source ?? "unknown"}
+          {lastUpdated && ` • Updated: ${new Date(lastUpdated).toLocaleString()}`}
+        </div>
+
       </div>
     </section>
   );
