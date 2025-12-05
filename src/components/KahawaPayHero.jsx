@@ -72,80 +72,30 @@ export default function KahawaPayHero() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
         {/* HEADER */}
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 rounded-2xl bg-white p-2 shadow">
-            <svg width="40" height="40" viewBox="0 0 24 24">
-              <rect width="24" height="24" rx="6" fill="#0ea5e9" />
-              <text x="50%" y="53%" textAnchor="middle" fontWeight="700" fontSize="12" fill="white">KP</text>
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">Our Competitive Market Prices</h1>
-            <p className="text-sm text-slate-500">Live indicative rates — updated automatically</p>
-          </div>
-        </div>
+<div className="flex items-center gap-3">
+  <div className="flex-shrink-0 rounded-2xl bg-white p-2 shadow">
+    <svg width="40" height="40" viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="#0ea5e9" />
+      <text
+        x="50%"
+        y="53%"
+        textAnchor="middle"
+        fontWeight="700"
+        fontSize="12"
+        fill="white"
+      >
+        KP
+      </text>
+    </svg>
+  </div>
 
-        {/* LAST UPDATED */}
-        <div className="text-sm text-slate-500">
-          {!loading && !error && lastUpdated ? (
-            <div>Updated: {new Date(lastUpdated).toLocaleString()}</div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* MAIN CARD */}
-      <div className="max-w-6xl mx-auto px-4 pb-4">
-        <div className="w-full bg-white rounded-2xl p-3 shadow-sm mt-2">
-
-          {/* LOADING */}
-          {loading && <div className="text-center py-6 text-slate-600">Loading rates…</div>}
-
-          {/* ERROR */}
-          {!loading && error && (
-            <div className="text-sm text-red-600 py-3">
-              Failed to load rates ({error})
-            </div>
-          )}
-
-          {/* EMPTY */}
-          {!loading && !error && filteredRows.length === 0 && (
-            <div className="text-sm text-slate-600 py-3">No rates available</div>
-          )}
-
-          {/* DATA */}
-          {!loading && !error && filteredRows.length > 0 && (
-            <>
-              <div className="flex flex-wrap gap-4 items-start mb-4">
-                {filteredRows.map((r, idx) => {
-                  const base = (r.base_currency || "USD").toUpperCase();
-                  const target = (r.target_currency || "—").toUpperCase();
-                  const price = r.rate ?? r.value ?? null;
-
-                  return (
-                    <div key={idx} className="px-3 py-2 bg-gray-50 rounded-md border shadow-sm min-w-[150px]">
-                      <div className="text-xs text-gray-600">
-                        {target} / {base}
-                      </div>
-                      <div className="text-lg font-medium">{fmt(price)}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* BUTTONS INSERTED HERE */}
-              <div className="flex flex-wrap gap-3 mt-4">
-
-                {/* KP LOG BUTTON */}
-                <button className="w-full sm:w-auto bg-kahawa/10 text-kahawa dark:text-kahawa-dark rounded-xl py-2 px-4 hover:bg-kahawa/20 transition">
-                  KP Log
-                </button>
-
-                {/* CURRENCY BUTTON */}
-                <button className="bg-kahawa text-white font-semibold rounded-xl py-2 px-4 shadow-md hover:bg-kahawa-dark transition active:scale-95">
-                  Select Currency
-                </button>
-
-              </div>
+  <div>
+    <h1 className="text-lg font-semibold">Our Competitive Market Prices</h1>
+    <p className="text-sm text-slate-500">
+      Live indicative rates — updated automatically
+    </p>
+  </div>
+</div>
 
               <div className="text-xs text-slate-500 mt-4">
                 Source: {data?.source ?? "unknown"}
