@@ -9,19 +9,22 @@ export default function About() {
       {/* Block-style paragraph */}
       <div className="bg-gray-50 border-l-4 border-kahawa-brown p-4 rounded">
         <p className="text-gray-700 leading-relaxed text-justify">
-          KahawaPay is a digital and innovative way to reach out to family and friends across borders. Using the power of blockchain technology, we make it simple to send tips and small gifts that instantly convert to local currency. Whether you’re buying your loved ones a cup of coffee or sharing a token of appreciation, KahawaPay keeps you connected—fast, secure, and reliable. Enjoy seamless cross-jurisdiction tipping with 24/7 support, all powered by a touch of crypto innovation.
+          KahawaPay is a fast, secure, and innovative crypto-powered platform that helps people in the diaspora send tips, appreciation gifts, and small cross-border payments to family and friends in Africa. By using blockchain and Bitcoin technology, KahawaPay makes it simple, affordable, and instant to support loved ones back home—no matter where you are in the world.
         
 		</p>
+		  <P>
+		  With seamless crypto-to-local-currency conversion, you can send Bitcoin, USDT, or a small token of appreciation, and your recipient in Africa receives it instantly in their local currency. KahawaPay is designed to be fast, secure, and reliable, offering 24/7 global access without the friction of traditional remittance services.
+		  </P>
 		<p>
 		<strong>Getting Started</strong>
 		</p>
 		<p className="text-gray-700 leading-relaxed text-justify">
-KahawaPay makes it simple to create and log in to your account or wallet and start sending tips instantly. You can also send a tip anonymously without creating an account—perfect for quick gestures of appreciation. However, anonymous tips have a set limit to ensure security and compliance.
+Getting started with KahawaPay is simple. Create your KahawaPay wallet and start sending Bitcoin or crypto tips instantly to Kenya and other African countries. You can also send tips anonymously without creating an account—perfect for quick gifts or surprise gestures of appreciation. To keep users safe, anonymous tips include built-in security limits and compliance controls.
 		</p>
       </div>
 
       <p className="mt-4 mb-2">
-        Contact us:{" "}
+        For help or inquiries, contact us at {" "}
         <a className="text-blue-600 underline" href="mailto:info@kahawapay.com">
           info@kahawapay.com
         </a>
