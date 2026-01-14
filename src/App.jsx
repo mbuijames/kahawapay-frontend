@@ -1,6 +1,7 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
+import ChatWidget from "./components/ChatWidget";
 
 import { logoutUser } from "./api";
 
@@ -139,6 +140,18 @@ function Shell({ user, setUser }) {
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/send" replace />} />
+			return (
+  <BrowserRouter>
+    <Navbar />
+    <Routes>
+      {/* all routes */}
+    </Routes>
+
+    {/* Global floating chat */}
+    <ChatWidget />
+  </BrowserRouter>
+);
+
         </Routes>
       </main>
 
