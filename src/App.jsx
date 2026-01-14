@@ -143,8 +143,6 @@ function Shell({ user, setUser }) {
       </Routes>
 		  <FloatingChat />
     </main>
-  );
-}
 
 
       {/* Footer (hide for admin) */}
