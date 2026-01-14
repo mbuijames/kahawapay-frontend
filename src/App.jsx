@@ -162,7 +162,9 @@ function Shell({ user, setUser }) {
             <a href="/terms" className="hover:underline">Terms of Service</a> |{" "}
             <a href="/privacy" className="hover:underline">Privacy Policy</a>
           </p>
-          <p className="mt-2">© {new Date().getFullYear()} KahawaPay</p>
+          <p className="text-sm text-gray-400 mt-4">
+          © {new Date().getFullYear()} KahawaPay. All rights reserved.
+        </p>
         </footer>
       )}
     </div>
