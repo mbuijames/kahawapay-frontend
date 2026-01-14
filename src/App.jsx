@@ -61,10 +61,33 @@ function Shell({ user, setUser }) {
           <div className="space-x-4">
             {!user && (
               <>
-			  <Link to="/about" className="text-gray-700 hover:text-blue-600 font-medium">About</Link>
-                <Link to="/login" className="text-gray-700 hover:text-blue-600 font-medium">Login</Link>
-                <Link to="/register" className="text-gray-700 hover:text-blue-600 font-medium">Register</Link>
-                <Link to="/send" className="text-gray-700 hover:text-blue-600 font-medium">Send</Link>
+			  <Link
+  to="/about"
+  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-blue-600 hover:text-white transition"
+>
+  About
+</Link>
+
+<Link
+  to="/login"
+  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-blue-600 hover:text-white transition"
+>
+  Login
+</Link>
+
+<Link
+  to="/register"
+  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-blue-600 hover:text-white transition"
+>
+  Register
+</Link>
+
+<Link
+  to="/send"
+  className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+>
+  Send
+</Link>
               </>
             )}
 
