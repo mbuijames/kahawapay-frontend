@@ -1,7 +1,7 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
-import FloatingChat from "./components/FloatingChat";
+import SupportChatBox from "./components/SupportChatBox";
 
 import { logoutUser } from "./api";
 
@@ -141,7 +141,7 @@ function Shell({ user, setUser }) {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/send" replace />} />
       </Routes>
-		  <FloatingChat />
+		 <SupportChatBox />
     </main>
 
 
