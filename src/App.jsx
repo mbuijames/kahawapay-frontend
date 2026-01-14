@@ -139,10 +139,9 @@ function Shell({ user, setUser }) {
           />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/send" replace />} />
-			function App() {
+  function App() {
   return (
-    <>
+    <main>
       <Navbar />
 
       <Routes>
@@ -154,13 +153,10 @@ function Shell({ user, setUser }) {
 
       {/* Global Chat Widget */}
       <FloatingChat />
-    </>
+    </main>
   );
 }
 
-
-        </Routes>
-      </main>
 
       {/* Footer (hide for admin) */}
       {!isAdmin && (
