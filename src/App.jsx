@@ -138,21 +138,10 @@ function Shell({ user, setUser }) {
             }
           />
 
-          {/* Fallback */}
-  function App() {
-  return (
-    <main>
-      <Navbar />
-
-      <Routes>
-        {/* all your routes go here */}
-
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/send" replace />} />
       </Routes>
-
-      {/* Global Chat Widget */}
-      <FloatingChat />
+		  <FloatingChat />
     </main>
   );
 }
