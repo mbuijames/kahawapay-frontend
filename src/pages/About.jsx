@@ -33,7 +33,7 @@ export default function About() {
         {/* Image */}
         <div className="relative">
           <img
-            src="/image/africa-crypto-transfer.jpg"
+            src="/africa-crypto-transfer.jpg"
             alt="Bitcoin remittance to Africa"
             className="rounded-2xl shadow-lg w-full object-cover"
           />
