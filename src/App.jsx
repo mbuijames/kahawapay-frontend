@@ -61,30 +61,30 @@ function Shell({ user, setUser }) {
           <div className="space-x-4">
             {!user && (
               <>
-			  <Link
+<Link
   to="/about"
-  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-blue-600 hover:text-white transition"
+  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
 >
   About
 </Link>
 
 <Link
   to="/login"
-  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-blue-600 hover:text-white transition"
+  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
 >
   Login
 </Link>
 
 <Link
   to="/register"
-  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-blue-600 hover:text-white transition"
+  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
 >
   Register
 </Link>
 
 <Link
   to="/send"
-  className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+  className="px-4 py-2 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 transition"
 >
   Send
 </Link>
@@ -93,23 +93,54 @@ function Shell({ user, setUser }) {
 
             {user && !isAdmin && (
               <>
-                <Link to="/send" className="text-gray-700 hover:text-blue-600 font-medium">Send</Link>
-                <Link to="/wallet" className="text-gray-700 hover:text-blue-600 font-medium">Wallet</Link>
-				<Link to="/account" className="text-gray-700 hover:text-blue-600 font-medium">Account</Link>
+                <Link
+  to="/send"
+  className="px-4 py-2 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 transition"
+>
+  Send
+</Link>
+
+<Link
+  to="/wallet"
+  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
+>
+  Wallet
+</Link>
+
+<Link
+  to="/account"
+  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
+>
+  Account
+</Link>
               </>
             )}
 
             {isAdmin && (
 				<>
-              <Link to="/admin" className="text-gray-700 hover:text-blue-600 font-medium">Admin Panel</Link>
-			   <Link to="/account" className="text-gray-700 hover:text-blue-600 font-medium">Account</Link>
+             <Link
+  to="/admin"
+  className="px-4 py-2 rounded-lg bg-amber-800 text-white font-medium hover:bg-amber-900 transition"
+>
+  Admin Panel
+</Link>
+
+<Link
+  to="/account"
+  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
+>
+  Account
+</Link>
 			   </>
             )}
 
             {user && (
-              <button onClick={handleLogout} className="text-red-600 hover:text-red-800 font-medium">
-                Logout
-              </button>
+            <button
+  onClick={handleLogout}
+  className="px-4 py-2 rounded-lg border border-amber-700 text-amber-800 font-medium hover:bg-amber-100 transition"
+>
+  Logout
+</button>
             )}
           </div>
         </div>
