@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+
 export default function About() {
   return (
     <div className="bg-gradient-to-br from-amber-50 to-white">
@@ -88,9 +89,7 @@ export default function About() {
           </a>
         </p>
 
-        <p className="text-sm text-gray-400 mt-4">
-          © {new Date().getFullYear()} KahawaPay. All rights reserved.
-        </p>
+       
       </div>
     </div>
   );
