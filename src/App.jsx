@@ -1,7 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
-import supportRoutes from "./routes/support.js";
 
 import { logoutUser } from "./api";
 
