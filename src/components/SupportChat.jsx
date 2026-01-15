@@ -1,48 +1,38 @@
 import { useState } from "react";
-import api from "../services/api";
 
 export default function SupportChat() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await api.post("/support/contact", form);
-    setSent(true);
-  };
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-4 right-4 bg-white shadow-xl rounded-xl p-4 w-80">
-      <h3 className="font-bold text-lg mb-2">Chat with KahawaPay</h3>
-
-      {sent ? (
-        <p className="text-green-600">Message sent. We'll reply shortly.</p>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <input
-            className="w-full border p-2 rounded"
-            placeholder="Your name"
-            onChange={e => setForm({ ...form, name: e.target.value })}
-            required
-          />
-          <input
-            className="w-full border p-2 rounded"
-            placeholder="Your email"
-            type="email"
-            onChange={e => setForm({ ...form, email: e.target.value })}
-            required
-          />
-          <textarea
-            className="w-full border p-2 rounded"
-            placeholder="Type your message..."
-            onChange={e => setForm({ ...form, message: e.target.value })}
-            required
-          />
-          <button className="w-full bg-brown-700 text-white p-2 rounded">
-            Send
-          </button>
-        </form>
+    <>
+      {/* Chat Window */}
+      {open && (
+        <div className="fixed bottom-24 right-5 bg-white shadow-xl rounded-xl p-4 w-80">
+          {/* your form here */}
+        </div>
       )}
-    </div>
+
+      {/* Floating Button (PUT THE ICON HERE) */}
+      <button
+        onClick={() => setOpen(!open)}
+        className="fixed bottom-5 right-5 w-14 h-14 bg-yellow-400 rounded-2xl shadow-lg flex items-center justify-center hover:scale-105 transition"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#111827"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w-7 h-7"
+        >
+          <path d="M3 11a9 9 0 0 1 18 0" />
+          <path d="M21 11v5a2 2 0 0 1-2 2h-2" />
+          <path d="M3 11v5a2 2 0 0 0 2 2h-2" />
+          <path d="M10 19h4" />
+        </svg>
+      </button>
+    </>
   );
 }
