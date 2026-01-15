@@ -21,6 +21,7 @@ import TwoFAPrompt from "./pages/TwoFAPrompt.jsx";
 import About from "./pages/About.jsx";
 import FAQ from "./pages/FAQ.jsx";
 import AccountSettings from "./pages/AccountSettings.jsx";
+import SupportChat from "./components/SupportChat.jsx";
 
 
 // --- Inline route guards ---
