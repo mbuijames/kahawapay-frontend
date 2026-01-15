@@ -62,31 +62,19 @@ function Shell({ user, setUser }) {
             {!user && (
               <>
 <Link
-  to="/about"
-  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
->
-  About
+  to="/about"className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition">About
 </Link>
 
 <Link
-  to="/login"
-  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
->
-  Login
+  to="/login"className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition">Login
 </Link>
 
 <Link
-  to="/register"
-  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
->
-  Register
+  to="/register"className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition">Register
 </Link>
 
 <Link
-  to="/send"
-  className="px-4 py-2 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 transition"
->
-  Send
+  to="/send"className="px-4 py-2 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 transition">Send
 </Link>
               </>
             )}
@@ -94,24 +82,15 @@ function Shell({ user, setUser }) {
             {user && !isAdmin && (
               <>
                 <Link
-  to="/send"
-  className="px-4 py-2 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 transition"
->
-  Send
+  to="/send"className="px-4 py-2 rounded-lg bg-amber-700 text-white font-medium hover:bg-amber-800 transition">Send
 </Link>
 
 <Link
-  to="/wallet"
-  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
->
-  Wallet
+  to="/wallet"className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition">Wallet
 </Link>
 
 <Link
-  to="/account"
-  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
->
-  Account
+  to="/account"className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition">Account
 </Link>
               </>
             )}
@@ -119,27 +98,18 @@ function Shell({ user, setUser }) {
             {isAdmin && (
 				<>
              <Link
-  to="/admin"
-  className="px-4 py-2 rounded-lg bg-amber-800 text-white font-medium hover:bg-amber-900 transition"
->
-  Admin Panel
+  to="/admin"className="px-4 py-2 rounded-lg bg-amber-800 text-white font-medium hover:bg-amber-900 transition">Admin Panel
 </Link>
 
 <Link
-  to="/account"
-  className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition"
->
-  Account
+  to="/account"className="px-4 py-2 rounded-lg bg-amber-50 text-amber-900 font-medium hover:bg-amber-200 transition">Account
 </Link>
 			   </>
             )}
 
             {user && (
             <button
-  onClick={handleLogout}
-  className="px-4 py-2 rounded-lg border border-amber-700 text-amber-800 font-medium hover:bg-amber-100 transition"
->
-  Logout
+  onClick={handleLogout}className="px-4 py-2 rounded-lg border border-amber-700 text-amber-800 font-medium hover:bg-amber-100 transition">Logout
 </button>
             )}
           </div>
