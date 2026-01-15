@@ -12,18 +12,29 @@ export default function SupportChat() {
   const brand = "#5a3a22";
 
   const handleSend = async () => {
-    try {
-      setSending(true);
-      await api.post("/support/contact", form);
-      setSent(true);
-      setForm({ name: "", email: "", message: "" });
-    } catch (err) {
-      alert("Failed to send message. Please try again.");
-      console.error(err);
-    } finally {
-      setSending(false);
-    }
-  };
+  try {
+    setSending(true);
+
+    const res = await fetch("https://kahawapay-backend.onrender.com/api/support/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    const data = await res.json();
+    console.log("Server response:", data);
+
+    if (!res.ok) throw new Error(data.error || "Failed");
+
+    setSent(true);
+    setForm({ name: "", email: "", message: "" });
+  } catch (err) {
+    alert("Failed to send message. Check console.");
+    console.error("CHAT SEND ERROR:", err);
+  } finally {
+    setSending(false);
+  }
+};
 
   return (
     <>
@@ -96,5 +107,6 @@ export default function SupportChat() {
     </>
   );
 }
+
 
 
