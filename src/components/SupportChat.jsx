@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "./api"; // same axios instance you use elsewhere
+import api from "../api";// 
 
 export default function SupportChat() {
   const [open, setOpen] = useState(false);
@@ -94,3 +94,4 @@ export default function SupportChat() {
     </>
   );
 }
+
