@@ -35,6 +35,7 @@ export default function About() {
           <img
             src="/africa-crypto-transfer.jpg"
             alt="Bitcoin remittance to Africa"
+             loading="eager"
             className="rounded-2xl shadow-lg w-full object-cover"
           />
         </div>
