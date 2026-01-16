@@ -12,6 +12,17 @@ export default function SupportChat() {
   const brand = "#5a3a22";
 
  const handleSend = async () => {
+  // 🔒 Frontend validation
+  if (!form.email.trim()) {
+    alert("Email is required.");
+    return;
+  }
+
+  if (!form.message.trim()) {
+    alert("Message is required.");
+    return;
+  }
+
   try {
     setSending(true);
 
@@ -21,6 +32,27 @@ export default function SupportChat() {
       body: JSON.stringify(form),
     });
 
+    const data = await res.json();
+    console.log("Server response:", data);
+
+    if (!res.ok) throw new Error(data.error || "Failed");
+
+    setSent(true);
+    setForm({ name: "", email: "", message: "" });
+
+    // Auto close after 3 seconds
+    setTimeout(() => {
+      setOpen(false);
+      setSent(false);
+    }, 3000);
+
+  } catch (err) {
+    alert(err.message || "Failed to send message.");
+    console.error("CHAT SEND ERROR:", err);
+  } finally {
+    setSending(false);
+  }
+};
     const data = await res.json();
     console.log("Server response:", data);
 
@@ -114,6 +146,7 @@ export default function SupportChat() {
     </>
   );
 }
+
 
 
 
