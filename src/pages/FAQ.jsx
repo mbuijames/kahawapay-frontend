@@ -30,68 +30,40 @@ const faqs = [
     question: "Which currencies are supported?",
     answer:
       "Supported currencies depend on the current exchange rate configuration set by the admin."
-  },
-  {
-    question: "Is my transaction secure?",
-    answer:
-      "Yes. All transactions are recorded on the Bitcoin blockchain and verified before confirmation."
   }
 ];
 
 export default function FAQ() {
   useEffect(() => {
     document.title = "FAQ – KahawaPay";
-
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute(
-        "content",
-        "Frequently Asked Questions about KahawaPay: sending Bitcoin tips, copying BTC address, confirmation, and supported currencies."
-      );
-    }
-
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": faqs.map(faq => ({
-        "@type": "Question",
-        "name": faq.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": faq.answer
-        }
-      }))
-    };
-
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.innerHTML = JSON.stringify(jsonLd);
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
   }, []);
 
   return (
-    <section className="max-w-3xl mx-auto p-6 bg-white rounded-2xl shadow">
-      <h1 className="text-2xl font-bold mb-6 text-center">Frequently Asked Questions</h1>
+    <section className="max-w-4xl mx-auto px-6 py-16">
+      <div className="bg-white rounded-2xl shadow-md p-10">
+        <h1 className="text-3xl font-bold mb-4 text-gray-900">Frequently Asked Questions</h1>
+        <p className="text-gray-600 mb-10">
+          Find answers to common questions about sending Bitcoin tips and how KahawaPay works.
+        </p>
 
-      <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <details
-            key={index}
-            className="border rounded-lg p-4 cursor-pointer group"
-          >
-            <summary className="font-semibold flex justify-between items-center">
-              {faq.question}
-              <span className="text-gray-400 group-open:rotate-180 transition-transform">
-                ▼
-              </span>
-            </summary>
-            <p className="mt-2 text-gray-700 leading-relaxed">{faq.answer}</p>
-          </details>
-        ))}
+        <div className="space-y-5">
+          {faqs.map((faq, index) => (
+            <details
+              key={index}
+              className="group border border-gray-200 rounded-xl px-5 py-4"
+            >
+              <summary className="cursor-pointer font-medium text-gray-800 flex justify-between items-center">
+                {faq.question}
+                <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                  ▼
+                </span>
+              </summary>
+              <p className="mt-3 text-gray-600 leading-relaxed">
+                {faq.answer}
+              </p>
+            </details>
+          ))}
+        </div>
       </div>
     </section>
   );
