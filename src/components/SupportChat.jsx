@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import api from "../api";// 
 
@@ -12,7 +13,7 @@ export default function SupportChat() {
   const brand = "#5a3a22";
 
  const handleSend = async () => {
-  // 🔒 Frontend validation
+   // 🔒 Frontend validation (put this first)
   if (!form.email.trim()) {
     alert("Email is required.");
     return;
@@ -40,19 +41,28 @@ export default function SupportChat() {
     setSent(true);
     setForm({ name: "", email: "", message: "" });
 
-    // Auto close after 3 seconds
+    // ⏳ Auto close after 3 seconds
     setTimeout(() => {
       setOpen(false);
-      setSent(false);
+      setSent(false); // reset for next open
     }, 3000);
 
   } catch (err) {
-    alert(err.message || "Failed to send message.");
+    alert(err.message || "Failed to send message. Check console.");
     console.error("CHAT SEND ERROR:", err);
   } finally {
     setSending(false);
   }
 };
+  try {
+    setSending(true);
+
+    const res = await fetch("https://kahawapay-backend.onrender.com/api/support/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
     const data = await res.json();
     console.log("Server response:", data);
 
@@ -146,7 +156,6 @@ export default function SupportChat() {
     </>
   );
 }
-
 
 
 
