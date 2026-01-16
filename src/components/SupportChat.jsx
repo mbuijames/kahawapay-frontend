@@ -1,8 +1,5 @@
-
 import { useState } from "react";
-import api from "../api";// 
-
-
+import api from "../api"; // (not used but kept as you had it)
 
 export default function SupportChat() {
   const [open, setOpen] = useState(false);
@@ -12,84 +9,56 @@ export default function SupportChat() {
 
   const brand = "#5a3a22";
 
- const handleSend = async () => {
-   // 🔒 Frontend validation (put this first)
-  if (!form.email.trim()) {
-    alert("Email is required.");
-    return;
-  }
+  const handleSend = async () => {
+    // 🔒 Frontend validation
+    if (!form.email.trim()) {
+      alert("Email is required.");
+      return;
+    }
 
-  if (!form.message.trim()) {
-    alert("Message is required.");
-    return;
-  }
+    if (!form.message.trim()) {
+      alert("Message is required.");
+      return;
+    }
 
-  try {
-    setSending(true);
+    try {
+      setSending(true);
 
-    const res = await fetch("https://kahawapay-backend.onrender.com/api/support/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+      const res = await fetch("https://kahawapay-backend.onrender.com/api/support/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const data = await res.json();
-    console.log("Server response:", data);
+      const data = await res.json();
+      console.log("Server response:", data);
 
-    if (!res.ok) throw new Error(data.error || "Failed");
+      if (!res.ok) throw new Error(data.error || "Failed");
 
-    setSent(true);
-    setForm({ name: "", email: "", message: "" });
+      setSent(true);
+      setForm({ name: "", email: "", message: "" });
 
-    // ⏳ Auto close after 3 seconds
-    setTimeout(() => {
-      setOpen(false);
-      setSent(false); // reset for next open
-    }, 3000);
+      // ⏳ Auto close after 3 seconds
+      setTimeout(() => {
+        setOpen(false);
+        setSent(false);
+      }, 3000);
 
-  } catch (err) {
-    alert(err.message || "Failed to send message. Check console.");
-    console.error("CHAT SEND ERROR:", err);
-  } finally {
-    setSending(false);
-  }
-};
-  try {
-    setSending(true);
-
-    const res = await fetch("https://kahawapay-backend.onrender.com/api/support/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-
-    const data = await res.json();
-    console.log("Server response:", data);
-
-    if (!res.ok) throw new Error(data.error || "Failed");
-
-    setSent(true);
-    setForm({ name: "", email: "", message: "" });
-
-    // ⏳ Auto close after 3 seconds
-    setTimeout(() => {
-      setOpen(false);
-      setSent(false); // reset for next open
-    }, 3000);
-
-  } catch (err) {
-    alert("Failed to send message. Check console.");
-    console.error("CHAT SEND ERROR:", err);
-  } finally {
-    setSending(false);
-  }
-};
+    } catch (err) {
+      alert(err.message || "Failed to send message. Check console.");
+      console.error("CHAT SEND ERROR:", err);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <>
       {open && (
-        <div className="fixed bottom-24 right-5 shadow-xl rounded-xl p-4 w-80 z-50 bg-white border"
-             style={{ borderColor: brand }}>
+        <div
+          className="fixed bottom-24 right-5 shadow-xl rounded-xl p-4 w-80 z-50 bg-white border"
+          style={{ borderColor: brand }}
+        >
           <h3 className="font-bold mb-2" style={{ color: brand }}>
             Chat with KahawaPay
           </h3>
@@ -156,7 +125,3 @@ export default function SupportChat() {
     </>
   );
 }
-
-
-
-
