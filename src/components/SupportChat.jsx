@@ -11,7 +11,7 @@ export default function SupportChat() {
 
   const brand = "#5a3a22";
 
-  const handleSend = async () => {
+ const handleSend = async () => {
   try {
     setSending(true);
 
@@ -28,6 +28,13 @@ export default function SupportChat() {
 
     setSent(true);
     setForm({ name: "", email: "", message: "" });
+
+    // ⏳ Auto close after 3 seconds
+    setTimeout(() => {
+      setOpen(false);
+      setSent(false); // reset for next open
+    }, 3000);
+
   } catch (err) {
     alert("Failed to send message. Check console.");
     console.error("CHAT SEND ERROR:", err);
@@ -107,6 +114,7 @@ export default function SupportChat() {
     </>
   );
 }
+
 
 
 
